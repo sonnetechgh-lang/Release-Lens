@@ -1,0 +1,27 @@
+{
+  "name": "@releaselens/diagnostics",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Deterministic diagnostic rules and the finding model for ReleaseLens.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@releaselens/config": "workspace:*",
+    "typescript": "~6.0.3",
+    "vitest": "^5.0.5"
+  }
+}
