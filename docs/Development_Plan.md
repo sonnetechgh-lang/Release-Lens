@@ -23,7 +23,7 @@ Companion to `ReleaseLens_Project_Plan.md`. That document says _what_ to build; 
 4. **Read-only, always.** No code path may mutate cloud resources or databases outside ReleaseLens's own database.
 5. **Each phase ends with something runnable and a green CI.**
 
-## Phase 0 — Repo bootstrap and problem definition (week 1)
+## Phase 0 — Repo bootstrap and problem definition (week 1) ✅ done
 
 - `git init`, MIT `LICENSE`, `README.md` (problem statement + "status: early development"), `.gitignore`, `.editorconfig`, `.env.example`.
 - `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md` (how to report vulnerabilities), issue and PR templates.
@@ -32,7 +32,7 @@ Companion to `ReleaseLens_Project_Plan.md`. That document says _what_ to build; 
 - Docs: `docs/architecture.md` (Mermaid diagram from the plan), `docs/threat-model.md` (first draft: webhooks, SSRF, credentials, log leakage, authorization), `docs/decisions/0001-*.md` ADRs recording the decisions above.
 - **Exit:** CI is green on an empty-but-real monorepo; the threat model and the first three rules are written down.
 
-## Phase 1 — Diagnostics engine on fixtures (weeks 2–3)
+## Phase 1 — Diagnostics engine on fixtures (weeks 2–3) ✅ done
 
 Matches priority #1 in the project plan.
 

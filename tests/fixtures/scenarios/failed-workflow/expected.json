@@ -1,0 +1,11 @@
+{
+  "description": "Run 103 failed. Production still runs run 102's image, which is the latest successful build, so it is not stale.",
+  "findings": [
+    {
+      "ruleId": "workflow.failed",
+      "severity": "warning",
+      "confidence": "high",
+      "evidenceIds": ["run-102", "run-103"]
+    }
+  ]
+}

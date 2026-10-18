@@ -1,6 +1,6 @@
 # ReleaseLens
 
-> **Status: early development (Phase 0).** Nothing here is ready to use yet. See the [development plan](docs/Development_Plan.md).
+> **Status: early development (Phase 1).** The diagnostics engine runs on synthetic scenarios; GitHub and Azure integrations are not built yet. See the [development plan](docs/Development_Plan.md).
 
 ReleaseLens is an open-source, read-only deployment diagnostics tool. It correlates evidence from source control, CI/CD, cloud deployments, health checks, and database migrations to answer questions like:
 
@@ -23,10 +23,25 @@ It is designed to **complement** tools like Azure Monitor and GitHub Actions, no
 ## Repository layout
 
 ```text
-apps/        # web dashboard, API, background worker (added in later phases)
-packages/    # shared config, diagnostics engine, contracts, integrations
-docs/        # plans, architecture, threat model, decision records
+apps/cli/             # releaselens diagnose command
+packages/contracts/   # validated evidence and finding schemas (Zod)
+packages/diagnostics/ # deterministic rules and Markdown reports
+packages/config/      # shared TypeScript config
+tests/fixtures/       # synthetic fault scenarios
+docs/                 # plans, architecture, threat model, decision records
 ```
+
+## Try it
+
+With Node.js 24+ and pnpm 11+:
+
+```sh
+pnpm install
+pnpm diagnose tests/fixtures/scenarios/stale-deployment
+pnpm diagnose tests/fixtures/scenarios/broken-health-endpoint --format json
+```
+
+This prints an evidence-backed report that separates facts, inferences, and unknowns. See the [fault scenarios](tests/fixtures/scenarios/README.md) for the full list.
 
 ## Development
 

@@ -1,0 +1,110 @@
+{
+  "schemaVersion": 1,
+  "evaluatedAt": "2026-10-18T12:00:00Z",
+  "project": {
+    "id": "demo-shop",
+    "name": "Demo Shop"
+  },
+  "service": {
+    "id": "storefront-api",
+    "name": "Storefront API"
+  },
+  "environment": {
+    "id": "production",
+    "name": "Production",
+    "releaseBranch": "main",
+    "deployWorkflowName": "build-and-deploy"
+  },
+  "workflowRuns": [
+    {
+      "id": "run-101",
+      "observedAt": "2026-10-18T11:55:00Z",
+      "url": "https://github.com/example/demo-shop/actions/runs/101",
+      "provider": "github",
+      "runId": "101",
+      "workflowName": "build-and-deploy",
+      "branch": "main",
+      "commitSha": "a1b2c3d4e5f60718293a4b5c6d7e8f9012345678",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-10-17T09:00:00Z",
+      "completedAt": "2026-10-17T09:08:00Z",
+      "producedImageDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    {
+      "id": "run-102",
+      "observedAt": "2026-10-18T11:55:00Z",
+      "url": "https://github.com/example/demo-shop/actions/runs/102",
+      "provider": "github",
+      "runId": "102",
+      "workflowName": "build-and-deploy",
+      "branch": "main",
+      "commitSha": "b2c3d4e5f60718293a4b5c6d7e8f901234567890",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-10-18T08:00:00Z",
+      "completedAt": "2026-10-18T08:09:00Z",
+      "producedImageDigest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    }
+  ],
+  "deployment": {
+    "id": "deploy-r101",
+    "observedAt": "2026-10-18T08:30:00Z",
+    "provider": "azure-container-apps",
+    "revisionName": "storefront-api--r101",
+    "providerStatus": "running",
+    "imageReference": "demoacr.azurecr.io/storefront-api@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "imageDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "activeSince": "2026-10-17T09:15:00Z"
+  },
+  "healthChecks": [
+    {
+      "id": "hc-1",
+      "observedAt": "2026-10-18T11:45:00Z",
+      "provider": "health-probe",
+      "endpoint": "/healthz",
+      "outcome": "pass",
+      "durationMs": 42,
+      "httpStatus": 200
+    },
+    {
+      "id": "hc-2",
+      "observedAt": "2026-10-18T11:50:00Z",
+      "provider": "health-probe",
+      "endpoint": "/healthz",
+      "outcome": "pass",
+      "durationMs": 42,
+      "httpStatus": 200
+    },
+    {
+      "id": "hc-3",
+      "observedAt": "2026-10-18T11:55:00Z",
+      "provider": "health-probe",
+      "endpoint": "/healthz",
+      "outcome": "pass",
+      "durationMs": 42,
+      "httpStatus": 200
+    }
+  ],
+  "syncStatus": [
+    {
+      "id": "sync-github",
+      "provider": "github",
+      "lastAttemptAt": "2026-10-18T11:55:00Z",
+      "lastSuccessfulSyncAt": "2026-10-18T11:55:00Z"
+    },
+    {
+      "id": "sync-azure",
+      "provider": "azure-container-apps",
+      "lastAttemptAt": "2026-10-18T11:58:00Z",
+      "lastSuccessfulSyncAt": "2026-10-18T08:30:00Z",
+      "lastErrorKind": "timeout"
+    },
+    {
+      "id": "sync-health",
+      "provider": "health-probe",
+      "lastAttemptAt": "2026-10-18T11:59:00Z",
+      "lastSuccessfulSyncAt": "2026-10-18T11:59:00Z"
+    }
+  ]
+}

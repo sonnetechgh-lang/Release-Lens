@@ -1,0 +1,11 @@
+{
+  "description": "The revision uses the :latest tag with no digest or commit label, so the running code cannot be identified. Staleness is not claimed.",
+  "findings": [
+    {
+      "ruleId": "deployment.identity-unverified",
+      "severity": "warning",
+      "confidence": "high",
+      "evidenceIds": ["deploy-r102"]
+    }
+  ]
+}

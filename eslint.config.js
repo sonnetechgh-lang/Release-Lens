@@ -19,6 +19,14 @@ export default tseslint.config(
     },
   },
   {
+    // Tests build fixtures by mutating known-good data; `!` and terse arrows keep them readable.
+    files: ["**/*.test.ts", "**/test-support/**/*.ts"],
+    rules: {
+      "@typescript-eslint/no-non-null-assertion": "off",
+      "@typescript-eslint/no-confusing-void-expression": "off",
+    },
+  },
+  {
     files: ["**/*.js", "**/*.mjs", "**/*.cjs"],
     ...tseslint.configs.disableTypeChecked,
   },

@@ -1,0 +1,11 @@
+{
+  "description": "Azure syncs have timed out for 3.5 hours. The last known revision looks stale, but that data is too old to trust, so only the freshness problem is reported.",
+  "findings": [
+    {
+      "ruleId": "evidence.stale",
+      "severity": "warning",
+      "confidence": "high",
+      "evidenceIds": ["sync-azure"]
+    }
+  ]
+}

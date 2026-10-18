@@ -1,0 +1,11 @@
+{
+  "description": "Run 102 succeeded ~4h ago, but the active revision runs the image built by run 101.",
+  "findings": [
+    {
+      "ruleId": "deployment.stale",
+      "severity": "warning",
+      "confidence": "high",
+      "evidenceIds": ["deploy-r101", "run-101", "run-102"]
+    }
+  ]
+}

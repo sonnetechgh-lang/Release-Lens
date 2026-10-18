@@ -1,0 +1,11 @@
+{
+  "description": "Three consecutive /healthz failures starting 3 minutes after revision r103 became active.",
+  "findings": [
+    {
+      "ruleId": "health.endpoint-failing",
+      "severity": "high",
+      "confidence": "medium",
+      "evidenceIds": ["deploy-r103", "hc-1", "hc-2", "hc-3", "hc-4"]
+    }
+  ]
+}

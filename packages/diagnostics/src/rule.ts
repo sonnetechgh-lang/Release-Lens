@@ -1,13 +1,8 @@
-export const SEVERITIES = ["info", "warning", "high", "critical"] as const;
-export type Severity = (typeof SEVERITIES)[number];
-
-export const CONFIDENCES = ["low", "medium", "high"] as const;
-export type Confidence = (typeof CONFIDENCES)[number];
+import type { DiagnosticSnapshot, Finding, FindingCategory } from "@releaselens/contracts";
 
 /**
  * A diagnostic rule is a pure function from an evidence snapshot to findings.
- * The snapshot and finding shapes are defined in Phase 1; rules stay generic
- * over them so the registry does not depend on provider code.
+ * Generic so the registry can be tested on its own; real rules use `DiagnosticRule`.
  */
 export interface Rule<TSnapshot, TFinding> {
   /** Stable identifier, for example `deployment.stale`. */
@@ -16,6 +11,10 @@ export interface Rule<TSnapshot, TFinding> {
   readonly version: number;
   readonly description: string;
   evaluate(snapshot: TSnapshot): readonly TFinding[];
+}
+
+export interface DiagnosticRule extends Rule<DiagnosticSnapshot, Finding> {
+  readonly category: FindingCategory;
 }
 
 const RULE_ID_PATTERN = /^[a-z][a-z0-9]*(\.[a-z][a-z0-9-]*)+$/;

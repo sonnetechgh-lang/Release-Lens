@@ -1,0 +1,29 @@
+{
+  "name": "@releaselens/cli",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Command-line tool to run ReleaseLens diagnostics against an evidence snapshot.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "releaselens": "./dist/main.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@releaselens/contracts": "workspace:*",
+    "@releaselens/diagnostics": "workspace:*"
+  },
+  "devDependencies": {
+    "@releaselens/config": "workspace:*",
+    "@types/node": "^24.19.2",
+    "typescript": "~6.0.3",
+    "vitest": "^5.0.5"
+  }
+}
