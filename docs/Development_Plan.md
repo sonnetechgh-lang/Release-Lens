@@ -44,7 +44,7 @@ Matches priority #1 in the project plan.
 - Tests: positive, negative, missing-data and stale-data cases for every rule.
 - **Exit:** at least 3 fixture scenarios produce exactly the expected findings in CI.
 
-## Phase 2 — Foundation: API, database, auth, basic UI (weeks 4–6)
+## Phase 2 — Foundation: API, database, auth, basic UI (weeks 4–6) ✅ done
 
 - `docker-compose.yml`: Postgres, Redis, Mailpit.
 - `apps/api` (NestJS): config validation, structured logging (pino) with a redaction utility, correlation IDs, `/healthz` and `/readyz`, OpenAPI generation, global validation pipe, rate limiting.

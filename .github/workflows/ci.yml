@@ -16,7 +16,7 @@ jobs:
   check:
     name: Lint, typecheck, test, build
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v7
 
@@ -33,3 +33,5 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm build
+      # Starts throwaway PostgreSQL containers (Testcontainers) and tests against real migrations.
+      - run: pnpm test:integration

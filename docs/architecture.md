@@ -39,6 +39,10 @@ flowchart TD
 
 **Diagnosis.** When new evidence arrives, the worker builds a snapshot for the affected service and environment, runs the rule registry, and upserts findings keyed by a fingerprint (rule ID + subject), so repeated observations update one finding instead of creating many.
 
+**Sign-in and access (Phase 2).** The browser only talks to the dashboard origin; `/api/*` is proxied to the API. GitHub OAuth (with `state` and PKCE) or the demo login creates a server-side session; the cookie holds a random token and the database stores only its hash. Global guards run on every request: rate limit → origin check for non-GET requests → session. Project routes resolve `org + project + user` in one query and return 404 for anything the user cannot see. See [decision 0005](decisions/0005-sessions-csrf-and-access-control.md).
+
+**Evidence storage and evaluation (Phase 2).** `packages/db` stores evidence in PostgreSQL, rebuilds a validated `DiagnosticSnapshot` from it, runs the rules, and upserts findings by fingerprint. Findings that stop firing are resolved; resolved findings that fire again reopen; acknowledged findings stay acknowledged.
+
 ## Provider interfaces
 
 Every external system is reached through an interface with at least two implementations: the real adapter and a fake used in demo mode and tests.

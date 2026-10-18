@@ -1,0 +1,280 @@
+// ReleaseLens database schema.
+// Timestamps are stored in UTC (timestamptz). Values that mirror the shared
+// contracts (conclusions, failure kinds, ...) are validated with Zod before writing.
+
+generator client {
+  provider               = "prisma-client"
+  output                 = "../src/generated/prisma"
+  moduleFormat           = "esm"
+  importFileExtension    = "js"
+  generatedFileExtension = "ts"
+  runtime                = "nodejs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  OWNER
+  VIEWER
+}
+
+enum Provider {
+  GITHUB               @map("github")
+  AZURE_CONTAINER_APPS @map("azure-container-apps")
+  HEALTH_PROBE         @map("health-probe")
+  PRISMA               @map("prisma")
+}
+
+enum Severity {
+  INFO     @map("info")
+  WARNING  @map("warning")
+  HIGH     @map("high")
+  CRITICAL @map("critical")
+}
+
+enum Confidence {
+  LOW    @map("low")
+  MEDIUM @map("medium")
+  HIGH   @map("high")
+}
+
+enum FindingState {
+  OPEN         @map("open")
+  ACKNOWLEDGED @map("acknowledged")
+  RESOLVED     @map("resolved")
+}
+
+// ---------- Identity and access ----------
+
+model User {
+  id          String       @id @default(cuid())
+  /// GitHub's numeric user ID. Null for the demo user.
+  githubId    BigInt?      @unique
+  login       String
+  name        String?
+  avatarUrl   String?
+  isDemo      Boolean      @default(false)
+  createdAt   DateTime     @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime     @updatedAt @db.Timestamptz(3)
+  memberships Membership[]
+  sessions    Session[]
+}
+
+/// Server-side session. Only a SHA-256 hash of the cookie token is stored.
+model Session {
+  id         String   @id @default(cuid())
+  tokenHash  String   @unique
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+  lastSeenAt DateTime @default(now()) @db.Timestamptz(3)
+  expiresAt  DateTime @db.Timestamptz(3)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model Organization {
+  id          String       @id @default(cuid())
+  slug        String       @unique
+  name        String
+  createdAt   DateTime     @default(now()) @db.Timestamptz(3)
+  memberships Membership[]
+  projects    Project[]
+  auditEvents AuditEvent[]
+}
+
+model Membership {
+  id        String       @id @default(cuid())
+  orgId     String
+  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      Role
+  createdAt DateTime     @default(now()) @db.Timestamptz(3)
+
+  @@unique([orgId, userId])
+  @@index([userId])
+}
+
+model AuditEvent {
+  id          String        @id @default(cuid())
+  orgId       String?
+  org         Organization? @relation(fields: [orgId], references: [id], onDelete: SetNull)
+  /// Kept as a plain ID so audit history survives user deletion.
+  actorUserId String?
+  action      String
+  targetType  String?
+  targetId    String?
+  /// Must never contain secrets. Written through the redaction helper.
+  metadata    Json?
+  createdAt   DateTime      @default(now()) @db.Timestamptz(3)
+
+  @@index([orgId, createdAt])
+}
+
+// ---------- Projects ----------
+
+model Project {
+  id              String              @id @default(cuid())
+  orgId           String
+  org             Organization        @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  slug            String
+  name            String
+  description     String?
+  /// `owner/name` of the GitHub repository, if connected.
+  repository      String?
+  /// When diagnostics last ran for any service in this project.
+  lastEvaluatedAt DateTime?           @db.Timestamptz(3)
+  createdAt       DateTime            @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime            @updatedAt @db.Timestamptz(3)
+  services        Service[]
+  environments    Environment[]
+  integrations    Integration[]
+  workflowRuns    WorkflowRun[]
+  findings        DiagnosticFinding[]
+
+  @@unique([orgId, slug])
+}
+
+model Service {
+  id           String              @id @default(cuid())
+  projectId    String
+  project      Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  slug         String
+  name         String
+  deployments  Deployment[]
+  healthChecks HealthCheckResult[]
+  findings     DiagnosticFinding[]
+
+  @@unique([projectId, slug])
+}
+
+model Environment {
+  id                 String              @id @default(cuid())
+  projectId          String
+  project            Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  slug               String
+  name               String
+  releaseBranch      String
+  deployWorkflowName String?
+  /// Partial diagnostic policy; missing values use the defaults from @releaselens/contracts.
+  policy             Json?
+  deployments        Deployment[]
+  healthChecks       HealthCheckResult[]
+  findings           DiagnosticFinding[]
+
+  @@unique([projectId, slug])
+}
+
+/// One connected provider per project. Credentials are added in a later phase.
+model Integration {
+  id                   String    @id @default(cuid())
+  projectId            String
+  project              Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  provider             Provider
+  lastAttemptAt        DateTime? @db.Timestamptz(3)
+  lastSuccessfulSyncAt DateTime? @db.Timestamptz(3)
+  /// Error category only (e.g. "timeout"), never a raw provider message.
+  lastErrorKind        String?
+  createdAt            DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt            DateTime  @updatedAt @db.Timestamptz(3)
+
+  @@unique([projectId, provider])
+}
+
+// ---------- Evidence ----------
+
+model WorkflowRun {
+  id                  String    @id @default(cuid())
+  projectId           String
+  project             Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  /// GitHub's run ID. Unique per project so repeated webhooks update one row.
+  externalId          String
+  workflowName        String
+  branch              String
+  commitSha           String    @db.Char(40)
+  status              String
+  conclusion          String?
+  startedAt           DateTime  @db.Timestamptz(3)
+  completedAt         DateTime? @db.Timestamptz(3)
+  producedImageDigest String?
+  url                 String?
+  observedAt          DateTime  @db.Timestamptz(3)
+
+  @@unique([projectId, externalId])
+  @@index([projectId, branch, completedAt])
+  @@index([projectId, producedImageDigest])
+}
+
+model Deployment {
+  id              String      @id @default(cuid())
+  serviceId       String
+  service         Service     @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  environmentId   String
+  environment     Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  revisionName    String
+  imageReference  String
+  imageDigest     String?
+  commitSha       String?     @db.Char(40)
+  commitShaSource String?
+  activeSince     DateTime    @db.Timestamptz(3)
+  providerStatus  String
+  /// True for the revision currently serving traffic.
+  isActive        Boolean     @default(false)
+  url             String?
+  observedAt      DateTime    @db.Timestamptz(3)
+
+  @@unique([serviceId, environmentId, revisionName])
+  @@index([serviceId, environmentId, activeSince])
+}
+
+model HealthCheckResult {
+  id            String      @id @default(cuid())
+  serviceId     String
+  service       Service     @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  environmentId String
+  environment   Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  endpoint      String
+  outcome       String
+  httpStatus    Int?
+  durationMs    Int
+  failureKind   String?
+  observedAt    DateTime    @db.Timestamptz(3)
+
+  @@index([serviceId, environmentId, observedAt])
+}
+
+// ---------- Diagnostics ----------
+
+model DiagnosticFinding {
+  id              String       @id @default(cuid())
+  /// Deterministic finding ID from the rules engine.
+  fingerprint     String
+  projectId       String
+  project         Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  serviceId       String
+  service         Service      @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  environmentId   String
+  environment     Environment  @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  ruleId          String
+  ruleVersion     Int
+  category        String
+  severity        Severity
+  confidence      Confidence
+  title           String
+  state           FindingState @default(OPEN)
+  facts           Json
+  inferences      Json
+  unknowns        Json
+  nextSteps       Json
+  evidenceIds     String[]
+  firstDetectedAt DateTime     @db.Timestamptz(3)
+  lastDetectedAt  DateTime     @db.Timestamptz(3)
+  resolvedAt      DateTime?    @db.Timestamptz(3)
+
+  @@unique([projectId, fingerprint])
+  @@index([projectId, state, severity])
+}

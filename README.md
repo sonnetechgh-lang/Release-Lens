@@ -1,6 +1,6 @@
 # ReleaseLens
 
-> **Status: early development (Phase 1).** The diagnostics engine runs on synthetic scenarios; GitHub and Azure integrations are not built yet. See the [development plan](docs/Development_Plan.md).
+> **Status: early development (Phase 2).** The dashboard, API, and diagnostics engine run locally on synthetic demo data. GitHub and Azure integrations are not built yet. See the [development plan](docs/Development_Plan.md).
 
 ReleaseLens is an open-source, read-only deployment diagnostics tool. It correlates evidence from source control, CI/CD, cloud deployments, health checks, and database migrations to answer questions like:
 
@@ -23,17 +23,42 @@ It is designed to **complement** tools like Azure Monitor and GitHub Actions, no
 ## Repository layout
 
 ```text
+apps/web/             # Next.js dashboard
+apps/api/             # NestJS API: sign-in, sessions, access control, project data
 apps/cli/             # releaselens diagnose command
-packages/contracts/   # validated evidence and finding schemas (Zod)
+packages/contracts/   # validated evidence, finding, and API schemas (Zod)
 packages/diagnostics/ # deterministic rules and Markdown reports
+packages/db/          # Prisma schema, migrations, evidence storage, demo seed
+packages/redact/      # secret redaction for logs and stored metadata
 packages/config/      # shared TypeScript config
 tests/fixtures/       # synthetic fault scenarios
 docs/                 # plans, architecture, threat model, decision records
 ```
 
-## Try it
+## Run it locally
 
-With Node.js 24+ and pnpm 11+:
+Requirements: Node.js 24+, pnpm 11+, and Docker.
+
+```sh
+cp .env.example .env
+pnpm install
+pnpm db:setup  # starts PostgreSQL in Docker, applies migrations, loads demo data
+pnpm dev       # API on :4000, dashboard on http://localhost:3000
+```
+
+Open http://localhost:3000 and choose **Explore the demo**. The demo has six services, each showing one kind of deployment problem. All data is synthetic.
+
+If port 5432 is already in use, set `POSTGRES_PORT=5433` in `.env` and use the same port in `DATABASE_URL`.
+
+### GitHub sign-in (optional)
+
+1. Create an OAuth app at https://github.com/settings/developers with the callback URL `http://localhost:3000/api/auth/github/callback`.
+2. Put its client ID and secret in `.env` (`GITHUB_OAUTH_CLIENT_ID`, `GITHUB_OAUTH_CLIENT_SECRET`).
+3. Add your GitHub login to `RELEASELENS_OWNER_GITHUB_LOGINS`. Only listed logins can sign in.
+
+ReleaseLens uses the GitHub token once to read your profile and never stores it.
+
+## Try the diagnostics engine without Docker
 
 ```sh
 pnpm install
@@ -41,19 +66,19 @@ pnpm diagnose tests/fixtures/scenarios/stale-deployment
 pnpm diagnose tests/fixtures/scenarios/broken-health-endpoint --format json
 ```
 
-This prints an evidence-backed report that separates facts, inferences, and unknowns. See the [fault scenarios](tests/fixtures/scenarios/README.md) for the full list.
+This prints an evidence-backed report that separates facts, inferences, and unknowns. See the [fault scenarios](tests/fixtures/scenarios/README.md).
 
 ## Development
 
-Requirements: Node.js 24+, pnpm 11+.
-
 ```sh
-pnpm install
 pnpm lint
 pnpm typecheck
-pnpm test
+pnpm test               # unit tests, no Docker needed
+pnpm test:integration   # API and database tests against a throwaway PostgreSQL container (needs Docker)
 pnpm build
 ```
+
+API documentation (OpenAPI) is served at http://localhost:4000/api/docs while the API runs.
 
 ## Documentation
 

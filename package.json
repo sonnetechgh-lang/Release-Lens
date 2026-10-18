@@ -11,10 +11,16 @@
     "build": "turbo run build",
     "test": "turbo run test",
     "typecheck": "turbo run typecheck",
-    "lint": "turbo run build --output-logs=errors-only && eslint .",
+    "lint": "turbo run build --filter=./packages/* --output-logs=errors-only && eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "diagnose": "node scripts/diagnose.mjs"
+    "diagnose": "node scripts/diagnose.mjs",
+    "dev": "turbo run dev --filter=@releaselens/api --filter=@releaselens/web",
+    "test:integration": "turbo run test:integration --concurrency=1",
+    "db:up": "docker compose up -d --wait postgres",
+    "db:migrate": "pnpm --filter @releaselens/db migrate:deploy",
+    "db:seed": "turbo run build --filter=@releaselens/db... --output-logs=errors-only && pnpm --filter @releaselens/db seed",
+    "db:setup": "pnpm db:up && pnpm db:migrate && pnpm db:seed"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

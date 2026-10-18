@@ -1,9 +1,11 @@
 {
   "$schema": "https://turborepo.com/schema.json",
+  "globalPassThroughEnv": ["DOCKER_HOST", "TESTCONTAINERS_*"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**"]
+      "outputs": ["dist/**", "src/generated/**", ".next/**", "!.next/cache/**"],
+      "env": ["API_INTERNAL_URL"]
     },
     "typecheck": {
       "dependsOn": ["^build"]
@@ -11,6 +13,16 @@
     "test": {
       "dependsOn": ["^build"],
       "outputs": []
+    },
+    "test:integration": {
+      "dependsOn": ["^build"],
+      "outputs": [],
+      "cache": false
+    },
+    "dev": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "persistent": true
     }
   }
 }

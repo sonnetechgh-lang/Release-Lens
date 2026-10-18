@@ -5,7 +5,15 @@ import tseslint from "typescript-eslint";
 
 export default tseslint.config(
   {
-    ignores: ["**/dist/**", "**/coverage/**", "**/.next/**", "**/.turbo/**", "**/node_modules/**"],
+    ignores: [
+      "**/dist/**",
+      "**/coverage/**",
+      "**/.next/**",
+      "**/.turbo/**",
+      "**/node_modules/**",
+      "**/src/generated/**",
+      "**/next-env.d.ts",
+    ],
   },
   js.configs.recommended,
   ...tseslint.configs.strictTypeChecked,
@@ -24,10 +32,21 @@ export default tseslint.config(
     rules: {
       "@typescript-eslint/no-non-null-assertion": "off",
       "@typescript-eslint/no-confusing-void-expression": "off",
+      // HTTP response bodies in API tests are untyped JSON.
+      "@typescript-eslint/no-unsafe-member-access": "off",
+      "@typescript-eslint/no-unsafe-call": "off",
+      "@typescript-eslint/no-unsafe-assignment": "off",
+      "@typescript-eslint/no-unsafe-argument": "off",
     },
   },
   {
-    files: ["**/*.js", "**/*.mjs", "**/*.cjs"],
+    // NestJS modules are intentionally empty classes configured by decorators.
+    files: ["**/*.module.ts"],
+    rules: { "@typescript-eslint/no-extraneous-class": "off" },
+  },
+  {
+    // Tool config files are not part of any TypeScript project, so lint them without type info.
+    files: ["**/*.js", "**/*.mjs", "**/*.cjs", "**/*.config.ts"],
     ...tseslint.configs.disableTypeChecked,
   },
 );
