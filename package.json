@@ -11,7 +11,7 @@
     "build": "turbo run build",
     "test": "turbo run test",
     "typecheck": "turbo run typecheck",
-    "lint": "eslint .",
+    "lint": "turbo run build --output-logs=errors-only && eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "diagnose": "node scripts/diagnose.mjs"
