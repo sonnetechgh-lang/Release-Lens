@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException } from "@nestjs/common";
+import { ForbiddenException, Inject, Injectable, NotFoundException } from "@nestjs/common";
 import type { Role } from "@releaselens/contracts";
 import type { Db } from "@releaselens/db";
 import { DB } from "../db/db.module.js";
@@ -45,4 +45,27 @@ export class AccessService {
       role: membership.role === "OWNER" ? "owner" : "viewer",
     };
   }
+
+  /** The user's role in an organization. Non-members get 404, like unknown organizations. */
+  async org(
+    userId: string,
+    orgSlug: string,
+  ): Promise<{ orgId: string; orgName: string; role: Role }> {
+    if (!SLUG.test(orgSlug)) throw new NotFoundException("Organization not found");
+    const membership = await this.db.membership.findFirst({
+      where: { userId, org: { slug: orgSlug } },
+      include: { org: true },
+    });
+    if (membership === null) throw new NotFoundException("Organization not found");
+    return {
+      orgId: membership.orgId,
+      orgName: membership.org.name,
+      role: membership.role === "OWNER" ? "owner" : "viewer",
+    };
+  }
+}
+
+/** Owners manage integrations and projects; viewers can only read. */
+export function requireOwner(access: { role: Role }): void {
+  if (access.role !== "owner") throw new ForbiddenException("Only organization owners can do this");
 }

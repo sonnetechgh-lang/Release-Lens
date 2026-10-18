@@ -1,0 +1,30 @@
+{
+  "name": "@releaselens/jobs",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Queue names, job payloads, and retry policy shared by the API and worker.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "bullmq": "^6.3.16",
+    "ioredis": "^6.0.0"
+  },
+  "devDependencies": {
+    "@releaselens/config": "workspace:*",
+    "@types/node": "^24.19.2",
+    "typescript": "~6.0.3"
+  }
+}

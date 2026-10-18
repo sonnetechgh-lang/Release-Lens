@@ -77,13 +77,14 @@ model Session {
 }
 
 model Organization {
-  id          String       @id @default(cuid())
-  slug        String       @unique
-  name        String
-  createdAt   DateTime     @default(now()) @db.Timestamptz(3)
-  memberships Membership[]
-  projects    Project[]
-  auditEvents AuditEvent[]
+  id                  String               @id @default(cuid())
+  slug                String               @unique
+  name                String
+  createdAt           DateTime             @default(now()) @db.Timestamptz(3)
+  memberships         Membership[]
+  projects            Project[]
+  auditEvents         AuditEvent[]
+  githubInstallations GithubInstallation[]
 }
 
 model Membership {
@@ -118,25 +119,31 @@ model AuditEvent {
 // ---------- Projects ----------
 
 model Project {
-  id              String              @id @default(cuid())
-  orgId           String
-  org             Organization        @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  slug            String
-  name            String
-  description     String?
+  id                   String              @id @default(cuid())
+  orgId                String
+  org                  Organization        @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  slug                 String
+  name                 String
+  description          String?
   /// `owner/name` of the GitHub repository, if connected.
-  repository      String?
+  repository           String?
+  /// GitHub's numeric repository ID (stable across renames).
+  githubRepositoryId   BigInt?
+  githubInstallationId String?
+  githubInstallation   GithubInstallation? @relation(fields: [githubInstallationId], references: [id], onDelete: SetNull)
   /// When diagnostics last ran for any service in this project.
-  lastEvaluatedAt DateTime?           @db.Timestamptz(3)
-  createdAt       DateTime            @default(now()) @db.Timestamptz(3)
-  updatedAt       DateTime            @updatedAt @db.Timestamptz(3)
-  services        Service[]
-  environments    Environment[]
-  integrations    Integration[]
-  workflowRuns    WorkflowRun[]
-  findings        DiagnosticFinding[]
+  lastEvaluatedAt      DateTime?           @db.Timestamptz(3)
+  createdAt            DateTime            @default(now()) @db.Timestamptz(3)
+  updatedAt            DateTime            @updatedAt @db.Timestamptz(3)
+  services             Service[]
+  environments         Environment[]
+  integrations         Integration[]
+  workflowRuns         WorkflowRun[]
+  findings             DiagnosticFinding[]
 
   @@unique([orgId, slug])
+  @@unique([orgId, githubRepositoryId])
+  @@index([githubRepositoryId])
 }
 
 model Service {
@@ -169,12 +176,14 @@ model Environment {
   @@unique([projectId, slug])
 }
 
-/// One connected provider per project. Credentials are added in a later phase.
+/// One connected provider per project. GitHub access comes from the GitHub App installation.
 model Integration {
   id                   String    @id @default(cuid())
   projectId            String
   project              Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
   provider             Provider
+  /// connected | suspended | disconnected
+  status               String    @default("connected")
   lastAttemptAt        DateTime? @db.Timestamptz(3)
   lastSuccessfulSyncAt DateTime? @db.Timestamptz(3)
   /// Error category only (e.g. "timeout"), never a raw provider message.
@@ -202,6 +211,8 @@ model WorkflowRun {
   completedAt         DateTime? @db.Timestamptz(3)
   producedImageDigest String?
   url                 String?
+  /// GitHub's updated_at. Older events never overwrite newer data.
+  providerUpdatedAt   DateTime? @db.Timestamptz(3)
   observedAt          DateTime  @db.Timestamptz(3)
 
   @@unique([projectId, externalId])
@@ -277,4 +288,44 @@ model DiagnosticFinding {
 
   @@unique([projectId, fingerprint])
   @@index([projectId, state, severity])
+}
+
+// ---------- GitHub App ----------
+
+/// One installation of the ReleaseLens GitHub App on a GitHub account.
+model GithubInstallation {
+  id                  String        @id @default(cuid())
+  installationId      BigInt        @unique
+  /// The ReleaseLens organization an owner linked this installation to.
+  orgId               String?
+  org                 Organization? @relation(fields: [orgId], references: [id], onDelete: SetNull)
+  accountLogin        String
+  accountType         String
+  repositorySelection String?
+  suspendedAt         DateTime?     @db.Timestamptz(3)
+  deletedAt           DateTime?     @db.Timestamptz(3)
+  createdAt           DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt           DateTime      @updatedAt @db.Timestamptz(3)
+  projects            Project[]
+}
+
+/// Every verified webhook delivery. The unique delivery ID makes redeliveries no-ops.
+model WebhookDelivery {
+  id             String    @id @default(cuid())
+  /// X-GitHub-Delivery header.
+  deliveryId     String    @unique
+  event          String
+  action         String?
+  installationId BigInt?
+  repositoryId   BigInt?
+  /// Kept until processed; cleared afterwards to limit retained data.
+  payload        Json?
+  /// received | processed | ignored | failed
+  status         String    @default("received")
+  attempts       Int       @default(0)
+  lastErrorKind  String?
+  receivedAt     DateTime  @default(now()) @db.Timestamptz(3)
+  processedAt    DateTime? @db.Timestamptz(3)
+
+  @@index([status, receivedAt])
 }

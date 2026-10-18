@@ -35,3 +35,6 @@ test-results/
 
 # Generated Prisma client
 packages/db/src/generated/
+
+# Private keys (e.g. GitHub App keys) never belong in the repo
+*.pem

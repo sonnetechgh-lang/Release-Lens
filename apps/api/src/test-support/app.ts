@@ -12,11 +12,28 @@ import {
 import { SessionService } from "../auth/session.service.js";
 import { configureApp } from "../bootstrap.js";
 import { loadConfig, type AppConfig } from "../config/config.js";
+import { GITHUB_APP, type GithubAppApi } from "../github/github-app.provider.js";
+import {
+  ProviderError,
+  type GithubInstallation,
+  type GithubRepository,
+} from "@releaselens/integrations";
 
 export const PUBLIC_ORIGIN = "http://localhost:3000";
 
-export function testConfig(databaseUrl: string, env: Record<string, string> = {}): AppConfig {
+export const WEBHOOK_SECRET = "test-webhook-secret-0123456789";
+
+export function testConfig(
+  databaseUrl: string,
+  env: Record<string, string> = {},
+  redisUrl = "redis://127.0.0.1:6379",
+): AppConfig {
   return loadConfig({
+    REDIS_URL: redisUrl,
+    GITHUB_WEBHOOK_SECRET: WEBHOOK_SECRET,
+    GITHUB_APP_ID: "12345",
+    GITHUB_APP_PRIVATE_KEY: "not-used-in-tests",
+    GITHUB_APP_SLUG: "releaselens-test",
     NODE_ENV: "test",
     DATABASE_URL: databaseUrl,
     PUBLIC_URL: PUBLIC_ORIGIN,
@@ -51,6 +68,50 @@ export class FakeGithub implements GithubOAuthClient {
   }
 }
 
+/** Stands in for the GitHub App API: installations and the repositories each can access. */
+export class FakeGithubApp implements GithubAppApi {
+  readonly installations = new Map<
+    number,
+    { installation: GithubInstallation; repos: GithubRepository[] }
+  >();
+
+  add(id: number, account: string, repos: { id: number; name: string }[]): void {
+    this.installations.set(id, {
+      installation: {
+        id,
+        account: { login: account, type: "Organization" },
+        repository_selection: "selected",
+      },
+      repos: repos.map((r) => ({
+        id: r.id,
+        name: r.name,
+        full_name: `${account}/${r.name}`,
+        private: true,
+        default_branch: "main",
+        owner: { login: account },
+      })),
+    });
+  }
+
+  listInstallations(): Promise<GithubInstallation[]> {
+    return Promise.resolve([...this.installations.values()].map((i) => i.installation));
+  }
+
+  getInstallation(id: number): Promise<GithubInstallation> {
+    const found = this.installations.get(id);
+    return found
+      ? Promise.resolve(found.installation)
+      : Promise.reject(new ProviderError("not-found", "nope", 404));
+  }
+
+  listInstallationRepositories(id: number): Promise<GithubRepository[]> {
+    const found = this.installations.get(id);
+    return found
+      ? Promise.resolve(found.repos)
+      : Promise.reject(new ProviderError("not-found", "nope", 404));
+  }
+}
+
 export function pkceChallenge(verifier: string): string {
   return createHash("sha256").update(verifier).digest("base64url");
 }
@@ -58,6 +119,7 @@ export function pkceChallenge(verifier: string): string {
 export interface TestApp {
   app: NestExpressApplication;
   github: FakeGithub;
+  githubApp: FakeGithubApp;
   /** Creates a session directly and returns a Cookie header value for it. */
   sessionCookie(userId: string): Promise<string>;
   close(): Promise<void>;
@@ -65,9 +127,12 @@ export interface TestApp {
 
 export async function createTestApp(config: AppConfig): Promise<TestApp> {
   const github = new FakeGithub();
+  const githubApp = new FakeGithubApp();
   const moduleRef = await Test.createTestingModule({ imports: [AppModule.forRoot(config)] })
     .overrideProvider(GITHUB_OAUTH_CLIENT)
     .useValue(github)
+    .overrideProvider(GITHUB_APP)
+    .useValue(githubApp)
     .compile();
   const app = moduleRef.createNestApplication<NestExpressApplication>({ logger: false });
   configureApp(app);
@@ -76,6 +141,7 @@ export async function createTestApp(config: AppConfig): Promise<TestApp> {
   return {
     app,
     github,
+    githubApp,
     async sessionCookie(userId) {
       const { token } = await app.get(SessionService).create(userId);
       return `rl_session=${token}`;

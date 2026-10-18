@@ -9,6 +9,18 @@ import {
 import type { ApiError } from "@releaselens/contracts";
 import type { Request, Response } from "express";
 
+function isExposedClientError(error: unknown): error is { status: number; message: string } {
+  if (typeof error !== "object" || error === null) return false;
+  const e = error as { status?: unknown; expose?: unknown; message?: unknown };
+  return (
+    e.expose === true &&
+    typeof e.status === "number" &&
+    e.status >= 400 &&
+    e.status < 500 &&
+    typeof e.message === "string"
+  );
+}
+
 /**
  * Every error leaves the API as `{ statusCode, message, requestId }`.
  * Unexpected errors are logged (redacted) and returned as a generic 500,
@@ -34,6 +46,10 @@ export class ErrorFilter implements ExceptionFilter {
             ? (response as { message: string }).message
             : exception.message;
       body = { statusCode: exception.getStatus(), message };
+    } else if (isExposedClientError(exception)) {
+      // Errors from Express middleware (body too large, malformed JSON) follow the
+      // http-errors convention; client errors marked `expose` are safe to return.
+      body = { statusCode: exception.status, message: exception.message };
     } else {
       this.logger.error({ err: exception }, "Unhandled error");
       body = { statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: "Internal server error" };

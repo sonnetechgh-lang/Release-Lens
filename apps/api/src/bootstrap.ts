@@ -3,6 +3,7 @@ import { NestFactory } from "@nestjs/core";
 import type { NestExpressApplication } from "@nestjs/platform-express";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import cookieParser from "cookie-parser";
+import express from "express";
 import { Logger } from "nestjs-pino";
 import { AppModule } from "./app.module.js";
 import type { AppConfig } from "./config/config.js";
@@ -12,6 +13,9 @@ export function configureApp(app: NestExpressApplication): void {
   app.disable("x-powered-by");
   // The dashboard proxies /api to this server, so trust the local proxy for client IPs.
   app.set("trust proxy", "loopback");
+  // Webhooks need the exact raw bytes to verify GitHub's signature, and can be larger.
+  // This runs first; the JSON parser below skips requests that are already parsed.
+  app.use("/api/webhooks", express.raw({ type: () => true, limit: "5mb" }));
   app.useBodyParser("json", { limit: "100kb" });
   app.use(cookieParser());
   app.use(

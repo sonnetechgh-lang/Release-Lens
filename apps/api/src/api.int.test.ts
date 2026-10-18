@@ -33,7 +33,7 @@ beforeAll(async () => {
     },
   });
 
-  t = await createTestApp(testConfig(databaseUrl));
+  t = await createTestApp(testConfig(databaseUrl, {}, inject("redisUrl")));
   demoCookie = await t.sessionCookie(demoUserId);
   outsiderCookie = await t.sessionCookie(outsider.id);
 });

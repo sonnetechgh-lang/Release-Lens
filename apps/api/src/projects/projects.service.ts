@@ -4,6 +4,7 @@ import {
   SEVERITY_RANK,
   type DeploymentItem,
   type FindingItem,
+  type IntegrationStatus,
   type ProjectDetail,
   type ProjectSummary,
   type SeverityCounts,
@@ -120,6 +121,7 @@ export class ProjectsService {
       })),
       integrations: p.integrations.map((i) => ({
         provider: PROVIDER_FROM_DB[i.provider],
+        status: i.status as IntegrationStatus["status"],
         lastAttemptAt: isoOrNull(i.lastAttemptAt),
         lastSuccessfulSyncAt: isoOrNull(i.lastSuccessfulSyncAt),
         lastErrorKind: i.lastErrorKind,

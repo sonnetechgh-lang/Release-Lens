@@ -15,9 +15,9 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "diagnose": "node scripts/diagnose.mjs",
-    "dev": "turbo run dev --filter=@releaselens/api --filter=@releaselens/web",
+    "dev": "turbo run dev --filter=@releaselens/api --filter=@releaselens/web --filter=@releaselens/worker",
     "test:integration": "turbo run test:integration --concurrency=1",
-    "db:up": "docker compose up -d --wait postgres",
+    "db:up": "docker compose up -d --wait postgres redis",
     "db:migrate": "pnpm --filter @releaselens/db migrate:deploy",
     "db:seed": "turbo run build --filter=@releaselens/db... --output-logs=errors-only && pnpm --filter @releaselens/db seed",
     "db:setup": "pnpm db:up && pnpm db:migrate && pnpm db:seed"

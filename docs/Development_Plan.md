@@ -55,7 +55,7 @@ Matches priority #1 in the project plan.
 - Tests: Supertest integration tests against a real Postgres (Testcontainers or a Compose service in CI), plus authorization-boundary tests (user A cannot read project B).
 - **Exit:** `docker compose up` → sign in → see a seeded project with deterministic deployment history and findings.
 
-## Phase 3 — GitHub integration (weeks 7–8)
+## Phase 3 — GitHub integration (weeks 7–8) ✅ done
 
 - GitHub App manifest and setup docs. Permissions: Actions read, Contents read, Deployments read, Metadata read.
 - Webhook endpoint: raw-body HMAC-SHA256 signature check, payload size limit, persist delivery ID (unique) → enqueue → return 2xx fast.

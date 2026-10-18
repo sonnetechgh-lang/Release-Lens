@@ -9,7 +9,7 @@ import {
 import { Reflector } from "@nestjs/core";
 import { APP_CONFIG, type AppConfig } from "../config/config.js";
 import { SESSION_COOKIE, type AuthedRequest } from "./auth.types.js";
-import { IS_PUBLIC } from "./public.decorator.js";
+import { IS_PUBLIC, SKIP_ORIGIN_CHECK } from "./public.decorator.js";
 import { SessionService } from "./session.service.js";
 
 /** Every route needs a valid session unless it is marked @Public(). */
@@ -44,11 +44,19 @@ const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
  */
 @Injectable()
 export class OriginGuard implements CanActivate {
-  constructor(@Inject(APP_CONFIG) private readonly config: AppConfig) {}
+  constructor(
+    @Inject(APP_CONFIG) private readonly config: AppConfig,
+    private readonly reflector: Reflector,
+  ) {}
 
   canActivate(context: ExecutionContext): boolean {
     const req = context.switchToHttp().getRequest<AuthedRequest>();
     if (SAFE_METHODS.has(req.method)) return true;
+    const skip = this.reflector.getAllAndOverride<boolean | undefined>(SKIP_ORIGIN_CHECK, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+    if (skip === true) return true;
     if (req.headers.origin !== this.config.publicOrigin) {
       throw new ForbiddenException("Request origin not allowed");
     }

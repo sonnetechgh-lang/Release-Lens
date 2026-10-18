@@ -1,4 +1,4 @@
-import { SEVERITIES, type ProjectSummary } from "@releaselens/contracts";
+import { SEVERITIES, type MeResponse, type ProjectSummary } from "@releaselens/contracts";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Card, EmptyState, SeverityBadge } from "@/components/ui";
@@ -8,7 +8,11 @@ import { formatUtc } from "@/lib/format";
 export const metadata: Metadata = { title: "Projects" };
 
 export default async function ProjectsPage() {
-  const projects = await apiGet<ProjectSummary[]>("/projects");
+  const [projects, me] = await Promise.all([
+    apiGet<ProjectSummary[]>("/projects"),
+    apiGet<MeResponse>("/me"),
+  ]);
+  const ownedOrgs = me.memberships.filter((m) => m.role === "owner").map((m) => m.org);
 
   return (
     <>
@@ -16,6 +20,19 @@ export default async function ProjectsPage() {
       <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
         Most urgent first. Findings are open problems backed by evidence.
       </p>
+      {ownedOrgs.length > 0 && (
+        <div className="mt-4 flex flex-wrap gap-2">
+          {ownedOrgs.map((org) => (
+            <Link
+              key={org.slug}
+              href={`/orgs/${org.slug}/connect`}
+              className="rounded-lg bg-sky-600 px-3 py-2 text-sm font-semibold text-white hover:bg-sky-700"
+            >
+              Connect a repository{ownedOrgs.length > 1 ? ` to ${org.name}` : ""}
+            </Link>
+          ))}
+        </div>
+      )}
 
       {projects.length === 0 ? (
         <div className="mt-6">

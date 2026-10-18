@@ -45,6 +45,8 @@ export interface ProjectSummary {
 
 export interface IntegrationStatus {
   provider: Provider;
+  /** connected, or suspended/disconnected when the GitHub App lost access. */
+  status: "connected" | "suspended" | "disconnected";
   lastAttemptAt: string | null;
   lastSuccessfulSyncAt: string | null;
   lastErrorKind: string | null;
@@ -112,4 +114,46 @@ export interface ApiError {
   statusCode: number;
   message: string;
   requestId?: string;
+}
+
+export interface GithubRepositoryOption {
+  id: number;
+  fullName: string;
+  defaultBranch: string | null;
+  private: boolean;
+  /** Slug of the project already connected to this repository in this organization. */
+  connectedProject: string | null;
+}
+
+export interface GithubInstallationOption {
+  installationId: number;
+  account: string;
+  accountType: string;
+  suspended: boolean;
+  repositories: GithubRepositoryOption[];
+  /** Error category when the repositories could not be listed. */
+  error: string | null;
+}
+
+export interface GithubSetupResponse {
+  appConfigured: boolean;
+  /** Link to install the GitHub App on an account, when the app slug is configured. */
+  installUrl: string | null;
+  installations: GithubInstallationOption[];
+}
+
+export interface CreateProjectRequest {
+  installationId: number;
+  repositoryId: number;
+  /** Defaults to the repository's default branch. */
+  releaseBranch?: string;
+  /** Only runs of this workflow count as releases. All workflows count if omitted. */
+  deployWorkflowName?: string;
+  /** Defaults to "Production". */
+  environmentName?: string;
+}
+
+export interface CreateProjectResponse {
+  org: { slug: string; name: string };
+  slug: string;
 }

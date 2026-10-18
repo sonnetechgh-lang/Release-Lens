@@ -18,6 +18,8 @@ const DB_PACKAGE_DIR = fileURLToPath(new URL("../../", import.meta.url));
 export default async function setup(project: TestProject): Promise<() => Promise<void>> {
   const container = await new PostgreSqlContainer("postgres:18-alpine")
     .withDatabase("releaselens_test")
+    // Docker Desktop can be slow to initialise PostgreSQL.
+    .withStartupTimeout(300_000)
     .start();
   const databaseUrl = container.getConnectionUri();
 

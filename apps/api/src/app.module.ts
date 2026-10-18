@@ -11,11 +11,16 @@ import { ErrorFilter } from "./common/error.filter.js";
 import type { AppConfig } from "./config/config.js";
 import { ConfigModule } from "./config/config.module.js";
 import { DbModule } from "./db/db.module.js";
+import { githubAppProvider } from "./github/github-app.provider.js";
+import { GithubController } from "./github/github.controller.js";
+import { GithubService } from "./github/github.service.js";
+import { JobsModule } from "./jobs/jobs.module.js";
 import { HealthController } from "./health/health.controller.js";
 import { LoggingModule } from "./logging/logging.module.js";
 import { AccessService } from "./projects/access.service.js";
 import { ProjectsController } from "./projects/projects.controller.js";
 import { ProjectsService } from "./projects/projects.service.js";
+import { WebhooksController } from "./webhooks/webhooks.controller.js";
 
 @Module({})
 export class AppModule {
@@ -26,16 +31,25 @@ export class AppModule {
         ConfigModule.forRoot(config),
         LoggingModule.forRoot(config),
         DbModule,
+        JobsModule,
         // 120 requests per minute per client by default; auth routes are stricter.
         ThrottlerModule.forRoot([{ name: "default", ttl: 60_000, limit: 120 }]),
       ],
-      controllers: [HealthController, AuthController, ProjectsController],
+      controllers: [
+        HealthController,
+        AuthController,
+        ProjectsController,
+        GithubController,
+        WebhooksController,
+      ],
       providers: [
         AuditService,
         AuthService,
         SessionService,
         AccessService,
         ProjectsService,
+        GithubService,
+        githubAppProvider,
         { provide: GITHUB_OAUTH_CLIENT, useClass: HttpGithubOAuthClient },
         // Guards run in this order: rate limit, origin check, session.
         { provide: APP_GUARD, useClass: ThrottlerGuard },

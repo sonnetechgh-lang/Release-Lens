@@ -16,7 +16,8 @@ export async function apiGet<T>(path: string): Promise<T> {
     signal: AbortSignal.timeout(10_000),
   });
   if (res.status === 401) redirect("/sign-in");
-  if (res.status === 404) notFound();
+  // Forbidden is shown like not found: the page says "does not exist, or you do not have access".
+  if (res.status === 404 || res.status === 403) notFound();
   if (!res.ok) throw new Error(`API request failed with status ${String(res.status)}`);
   return (await res.json()) as T;
 }

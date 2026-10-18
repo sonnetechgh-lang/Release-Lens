@@ -1,0 +1,36 @@
+{
+  "name": "@releaselens/worker",
+  "version": "0.0.0",
+  "private": true,
+  "description": "ReleaseLens background worker: webhook processing, GitHub reconciliation, diagnostics.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "start": "node dist/main.js",
+    "dev": "node scripts/dev.mjs",
+    "test:integration": "vitest run --project integration",
+    "test": "vitest run --project unit"
+  },
+  "dependencies": {
+    "@releaselens/contracts": "workspace:*",
+    "@releaselens/db": "workspace:*",
+    "@releaselens/integrations": "workspace:*",
+    "@releaselens/jobs": "workspace:*",
+    "@releaselens/redact": "workspace:*",
+    "bullmq": "^6.3.16",
+    "ioredis": "^6.0.0",
+    "pino": "^10.4.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@releaselens/config": "workspace:*",
+    "@testcontainers/postgresql": "^12.2.1",
+    "@types/node": "^24.19.2",
+    "pino-pretty": "^13.2.0",
+    "testcontainers": "^12.2.1",
+    "typescript": "~6.0.3",
+    "vitest": "^5.0.5"
+  }
+}

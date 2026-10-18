@@ -1,6 +1,7 @@
 import "reflect-metadata";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { ForbiddenException, type ExecutionContext } from "@nestjs/common";
+import { Reflector } from "@nestjs/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { HttpGithubOAuthClient } from "./auth/github-oauth.client.js";
 import { OriginGuard } from "./auth/guards.js";
@@ -85,10 +86,12 @@ describe("requestIdFor", () => {
 });
 
 describe("OriginGuard", () => {
-  const guard = new OriginGuard(loadConfig(BASE));
+  const guard = new OriginGuard(loadConfig(BASE), new Reflector());
   const ctx = (method: string, origin?: string) =>
     ({
       switchToHttp: () => ({ getRequest: () => ({ method, headers: origin ? { origin } : {} }) }),
+      getHandler: () => () => undefined,
+      getClass: () => Object,
     }) as unknown as ExecutionContext;
 
   it("allows safe methods from anywhere", () => {

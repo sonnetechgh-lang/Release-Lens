@@ -63,7 +63,14 @@ export default async function ProjectPage({ params }: Params) {
           {detail.integrations.map((i) => (
             <li key={i.provider}>
               <Card className="p-4">
-                <p className="font-medium">{PROVIDER_LABELS[i.provider] ?? i.provider}</p>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="font-medium">{PROVIDER_LABELS[i.provider] ?? i.provider}</p>
+                  {i.status !== "connected" && (
+                    <Badge className="bg-red-100 text-red-900 ring-red-300 dark:bg-red-950 dark:text-red-200 dark:ring-red-800">
+                      {i.status}
+                    </Badge>
+                  )}
+                </div>
                 <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
                   Last successful sync: {formatUtc(i.lastSuccessfulSyncAt)}
                 </p>

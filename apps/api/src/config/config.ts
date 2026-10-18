@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { z } from "zod";
 
 const csv = z
@@ -45,6 +46,20 @@ const EnvSchema = z
       .regex(/^[a-z0-9][a-z0-9-]{0,62}$/)
       .default("default"),
     RELEASELENS_ORG_NAME: z.string().min(1).default("My organization"),
+    REDIS_URL: z.string().min(1).default("redis://127.0.0.1:6379"),
+    /** Secret configured on the GitHub App's webhook. Webhooks are rejected without it. */
+    GITHUB_WEBHOOK_SECRET: z
+      .string()
+      .min(16, "GITHUB_WEBHOOK_SECRET must be at least 16 characters")
+      .optional(),
+    GITHUB_APP_ID: z.string().regex(/^\d+$/, "GITHUB_APP_ID must be numeric").optional(),
+    /** URL slug of the GitHub App, used to build its install link. */
+    GITHUB_APP_SLUG: z
+      .string()
+      .regex(/^[a-z0-9-]+$/)
+      .optional(),
+    GITHUB_APP_PRIVATE_KEY: z.string().optional(),
+    GITHUB_APP_PRIVATE_KEY_PATH: z.string().optional(),
   })
   .refine(
     (env) =>
@@ -68,6 +83,9 @@ export interface AppConfig {
   allowedLogins: ReadonlySet<string>;
   ownerLogins: ReadonlySet<string>;
   primaryOrg: { slug: string; name: string };
+  redisUrl: string;
+  githubWebhookSecret: string | null;
+  githubApp: { appId: string; privateKey: string; slug: string | null } | null;
 }
 
 export const APP_CONFIG = Symbol("APP_CONFIG");
@@ -82,6 +100,16 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   }
   const e = result.data;
   const publicUrl = new URL(e.PUBLIC_URL);
+  const privateKey =
+    e.GITHUB_APP_PRIVATE_KEY_PATH !== undefined
+      ? readFileSync(e.GITHUB_APP_PRIVATE_KEY_PATH, "utf8")
+      : // Allow single-line keys with literal \n, as many secret stores require.
+        e.GITHUB_APP_PRIVATE_KEY?.replace(/\\n/g, "\n");
+  if ((e.GITHUB_APP_ID === undefined) !== (privateKey === undefined)) {
+    throw new Error(
+      "Invalid configuration: set both GITHUB_APP_ID and a GitHub App private key, or neither",
+    );
+  }
   return {
     env: e.NODE_ENV,
     mode: e.RELEASELENS_MODE,
@@ -103,5 +131,11 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     ]),
     ownerLogins: new Set(e.RELEASELENS_OWNER_GITHUB_LOGINS),
     primaryOrg: { slug: e.RELEASELENS_ORG_SLUG, name: e.RELEASELENS_ORG_NAME },
+    redisUrl: e.REDIS_URL,
+    githubWebhookSecret: e.GITHUB_WEBHOOK_SECRET ?? null,
+    githubApp:
+      e.GITHUB_APP_ID !== undefined && privateKey !== undefined
+        ? { appId: e.GITHUB_APP_ID, privateKey, slug: e.GITHUB_APP_SLUG ?? null }
+        : null,
   };
 }

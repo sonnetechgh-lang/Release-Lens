@@ -43,6 +43,8 @@ flowchart TD
 
 **Evidence storage and evaluation (Phase 2).** `packages/db` stores evidence in PostgreSQL, rebuilds a validated `DiagnosticSnapshot` from it, runs the rules, and upserts findings by fingerprint. Findings that stop firing are resolved; resolved findings that fire again reopen; acknowledged findings stay acknowledged.
 
+**GitHub sync (Phase 3).** See [decision 0006](decisions/0006-webhook-ingestion-and-github-sync.md) and [GitHub App setup](github-app.md). Webhooks are verified, stored, and queued by the API; `apps/worker` (BullMQ) processes them, reconciles every 10 minutes, re-queues stuck deliveries, and re-runs diagnostics after every change.
+
 ## Provider interfaces
 
 Every external system is reached through an interface with at least two implementations: the real adapter and a fake used in demo mode and tests.
