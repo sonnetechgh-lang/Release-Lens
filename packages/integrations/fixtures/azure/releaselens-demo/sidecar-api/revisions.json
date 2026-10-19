@@ -1,0 +1,36 @@
+{
+  "value": [
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/releaselens-demo/providers/Microsoft.App/containerApps/sidecar-api/revisions/sidecar-api--r3",
+      "name": "sidecar-api--r3",
+      "type": "Microsoft.App/containerApps/revisions",
+      "properties": {
+        "createdTime": "2026-10-18T06:00:00+00:00",
+        "lastActiveTime": "2026-10-18T06:00:00+00:00",
+        "fqdn": "sidecar-api--r3.kindwater-1234abcd.westeurope.azurecontainerapps.io",
+        "template": {
+          "containers": [
+            {
+              "name": "otel-collector",
+              "image": "mcr.microsoft.com/azuremonitor/otel-collector:0.1"
+            },
+            {
+              "name": "sidecar-api",
+              "image": "releaselensdemo.azurecr.io/sidecar-api@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          ],
+          "scale": {
+            "minReplicas": 1,
+            "maxReplicas": 3
+          }
+        },
+        "active": true,
+        "replicas": 1,
+        "trafficWeight": 100,
+        "healthState": "Unhealthy",
+        "provisioningState": "Provisioned",
+        "runningState": "Degraded"
+      }
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "$response": {
+    "status": 401,
+    "body": {
+      "error": {
+        "code": "ExpiredAuthenticationToken",
+        "message": "The access token expiry UTC time is earlier than current UTC time."
+      }
+    }
+  }
+}

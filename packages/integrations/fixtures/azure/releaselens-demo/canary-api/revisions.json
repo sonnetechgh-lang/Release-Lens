@@ -1,0 +1,68 @@
+{
+  "value": [
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/releaselens-demo/providers/Microsoft.App/containerApps/canary-api/revisions/canary-api--green",
+      "name": "canary-api--green",
+      "type": "Microsoft.App/containerApps/revisions",
+      "properties": {
+        "createdTime": "2026-10-18T09:00:00+00:00",
+        "lastActiveTime": "2026-10-18T09:00:00+00:00",
+        "fqdn": "canary-api--green.kindwater-1234abcd.westeurope.azurecontainerapps.io",
+        "template": {
+          "containers": [
+            {
+              "name": "canary-api",
+              "image": "releaselensdemo.azurecr.io/canary-api@sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+              "resources": {
+                "cpu": 0.5,
+                "memory": "1Gi"
+              }
+            }
+          ],
+          "scale": {
+            "minReplicas": 1,
+            "maxReplicas": 3
+          }
+        },
+        "active": true,
+        "replicas": 1,
+        "trafficWeight": 20,
+        "healthState": "Healthy",
+        "provisioningState": "Provisioned",
+        "runningState": "Running"
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/releaselens-demo/providers/Microsoft.App/containerApps/canary-api/revisions/canary-api--blue",
+      "name": "canary-api--blue",
+      "type": "Microsoft.App/containerApps/revisions",
+      "properties": {
+        "createdTime": "2026-10-15T09:00:00+00:00",
+        "lastActiveTime": "2026-10-15T09:00:00+00:00",
+        "fqdn": "canary-api--blue.kindwater-1234abcd.westeurope.azurecontainerapps.io",
+        "template": {
+          "containers": [
+            {
+              "name": "canary-api",
+              "image": "releaselensdemo.azurecr.io/canary-api@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "resources": {
+                "cpu": 0.5,
+                "memory": "1Gi"
+              }
+            }
+          ],
+          "scale": {
+            "minReplicas": 1,
+            "maxReplicas": 3
+          }
+        },
+        "active": true,
+        "replicas": 1,
+        "trafficWeight": 80,
+        "healthState": "Healthy",
+        "provisioningState": "Provisioned",
+        "runningState": "Running"
+      }
+    }
+  ]
+}

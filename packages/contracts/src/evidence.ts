@@ -65,7 +65,8 @@ export const DeploymentEvidenceSchema = z
     commitSha: CommitShaSchema.optional(),
     commitShaSource: z.enum(["oci-label", "build-metadata"]).optional(),
     activeSince: IsoUtcSchema,
-    providerStatus: z.enum(["running", "provisioning", "failed", "stopped", "unknown"]),
+    /** `degraded`: running, but the provider reports unhealthy replicas. */
+    providerStatus: z.enum(["running", "provisioning", "degraded", "failed", "stopped", "unknown"]),
   })
   .refine((d) => (d.commitSha === undefined) === (d.commitShaSource === undefined), {
     message: "commitSha and commitShaSource must be provided together",

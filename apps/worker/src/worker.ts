@@ -1,13 +1,23 @@
 import { createDb } from "@releaselens/db";
-import { GithubAppClient } from "@releaselens/integrations";
+import {
+  AzureContainerAppsProvider,
+  GithubAppClient,
+  createAzureCredential,
+  createFixtureFetch,
+  simulatedCredential,
+  type DeploymentTargetProvider,
+} from "@releaselens/integrations";
 import {
   QUEUES,
+  createDeploymentSyncQueue,
   createReconcileQueue,
   createWebhookQueue,
+  enqueueDeploymentSync,
   enqueueReconcile,
   enqueueWebhook,
   providerBackoff,
   redisConnection,
+  type DeploymentSyncJob,
   type GithubReconcileJob,
   type GithubWebhookJob,
 } from "@releaselens/jobs";
@@ -16,6 +26,7 @@ import { UnrecoverableError, Worker, type Job } from "bullmq";
 import pino, { type Logger } from "pino";
 import type { WorkerConfig } from "./config.js";
 import type { WorkerDeps } from "./deps.js";
+import { syncAllDeploymentTargets, syncDeploymentTargets } from "./processors/deployments.js";
 import { reconcileAll, reconcileProject } from "./processors/reconcile.js";
 import { sweep } from "./processors/sweep.js";
 import { InvalidPayloadError, processDelivery } from "./processors/webhook.js";
@@ -34,6 +45,25 @@ export function createLogger(config: Pick<WorkerConfig, "env" | "logLevel">): Lo
 
 const SCHEDULE_RECONCILE_ALL = "reconcile-all";
 const SCHEDULE_SWEEP = "sweep";
+const SCHEDULE_DEPLOYMENT_SYNC_ALL = "deployment-sync-all";
+
+/** The deployment target reader for the configured Azure mode, or null when it is off. */
+export async function createDeploymentTarget(
+  azure: WorkerConfig["azure"],
+): Promise<DeploymentTargetProvider | null> {
+  if (azure.mode === "off") return null;
+  if (azure.mode === "simulated") {
+    return new AzureContainerAppsProvider({
+      credential: simulatedCredential,
+      fetch: createFixtureFetch(azure.fixturesDir),
+      timeoutMs: azure.requestTimeoutMs,
+    });
+  }
+  return new AzureContainerAppsProvider({
+    credential: await createAzureCredential(),
+    timeoutMs: azure.requestTimeoutMs,
+  });
+}
 
 export interface RunningWorker {
   deps: WorkerDeps;
@@ -52,14 +82,17 @@ export async function startWorker(
   const db = createDb(config.databaseUrl);
   const webhookQueue = createWebhookQueue(config.redisUrl);
   const reconcileQueue = createReconcileQueue(config.redisUrl);
+  const deploymentSyncQueue = createDeploymentSyncQueue(config.redisUrl);
 
   const deps: WorkerDeps = {
     db,
     github: config.githubApp === null ? null : new GithubAppClient(config.githubApp),
+    deploymentTarget: await createDeploymentTarget(config.azure),
     log,
     now: () => new Date(),
     enqueueDelivery: (deliveryId) => enqueueWebhook(webhookQueue, deliveryId),
     enqueueReconcile: (projectId) => enqueueReconcile(reconcileQueue, projectId),
+    enqueueDeploymentSync: (projectId) => enqueueDeploymentSync(deploymentSyncQueue, projectId),
   };
 
   const settings = {
@@ -90,7 +123,16 @@ export async function startWorker(
     { connection: redisConnection(config.redisUrl), concurrency: config.concurrency, settings },
   );
 
-  for (const worker of [webhookWorker, reconcileWorker]) {
+  const deploymentSyncWorker = new Worker<DeploymentSyncJob>(
+    QUEUES.deploymentSync,
+    async (job: Job<DeploymentSyncJob>) => {
+      if (job.data.projectId === undefined) return syncAllDeploymentTargets(deps);
+      return syncDeploymentTargets(deps, job.data.projectId);
+    },
+    { connection: redisConnection(config.redisUrl), concurrency: config.concurrency, settings },
+  );
+
+  for (const worker of [webhookWorker, reconcileWorker, deploymentSyncWorker]) {
     worker.on("failed", (job, err) => {
       log.warn(
         { queue: worker.name, jobId: job?.id, attempts: job?.attemptsMade, err },
@@ -112,17 +154,40 @@ export async function startWorker(
     { every: 60_000 },
     { name: SCHEDULE_SWEEP, data: {} },
   );
+  // With Azure off, remove a schedule left over from an earlier configuration.
+  if (deps.deploymentTarget === null) {
+    await deploymentSyncQueue.removeJobScheduler(SCHEDULE_DEPLOYMENT_SYNC_ALL);
+  } else {
+    await deploymentSyncQueue.upsertJobScheduler(
+      SCHEDULE_DEPLOYMENT_SYNC_ALL,
+      { every: config.azure.syncIntervalMs },
+      { name: SCHEDULE_DEPLOYMENT_SYNC_ALL, data: {} },
+    );
+  }
 
   log.info(
-    { githubApp: config.githubApp !== null, reconcileEveryMs: config.reconcileIntervalMs },
+    {
+      githubApp: config.githubApp !== null,
+      reconcileEveryMs: config.reconcileIntervalMs,
+      azureMode: config.azure.mode,
+      azureSyncEveryMs: config.azure.syncIntervalMs,
+    },
     "Worker started",
   );
 
   return {
     deps,
     async close() {
-      await Promise.all([webhookWorker.close(), reconcileWorker.close()]);
-      await Promise.all([webhookQueue.close(), reconcileQueue.close()]);
+      await Promise.all([
+        webhookWorker.close(),
+        reconcileWorker.close(),
+        deploymentSyncWorker.close(),
+      ]);
+      await Promise.all([
+        webhookQueue.close(),
+        reconcileQueue.close(),
+        deploymentSyncQueue.close(),
+      ]);
       await db.$disconnect();
     },
   };

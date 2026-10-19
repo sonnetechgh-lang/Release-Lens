@@ -1,0 +1,14 @@
+{
+  "$response": {
+    "status": 429,
+    "headers": {
+      "retry-after": "30"
+    },
+    "body": {
+      "error": {
+        "code": "TooManyRequests",
+        "message": "The request is being throttled."
+      }
+    }
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "value": [
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/releaselens-demo/providers/Microsoft.App/containerApps/paged-api/revisions/paged-api--r1",
+      "name": "paged-api--r1",
+      "type": "Microsoft.App/containerApps/revisions",
+      "properties": {
+        "createdTime": "2026-10-10T05:00:00+00:00",
+        "lastActiveTime": "2026-10-10T05:00:00+00:00",
+        "fqdn": "paged-api--r1.kindwater-1234abcd.westeurope.azurecontainerapps.io",
+        "template": {
+          "containers": [
+            {
+              "name": "paged-api",
+              "image": "releaselensdemo.azurecr.io/paged-api@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "resources": {
+                "cpu": 0.5,
+                "memory": "1Gi"
+              }
+            }
+          ],
+          "scale": {
+            "minReplicas": 1,
+            "maxReplicas": 3
+          }
+        },
+        "active": false,
+        "replicas": 0,
+        "trafficWeight": 0,
+        "healthState": "None",
+        "provisioningState": "Provisioned",
+        "runningState": "Stopped"
+      }
+    }
+  ]
+}

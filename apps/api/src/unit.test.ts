@@ -21,8 +21,11 @@ describe("loadConfig", () => {
       publicOrigin: "http://localhost:3000",
       cookieSecure: false,
       github: null,
+      azureMode: "off",
     });
     expect(config.allowedLogins.size).toBe(0);
+    expect(loadConfig({ ...BASE, AZURE_PROVIDER_MODE: "simulated" }).azureMode).toBe("simulated");
+    expect(() => loadConfig({ ...BASE, AZURE_PROVIDER_MODE: "maybe" })).toThrow();
   });
 
   it("uses secure cookies for https and lets owners sign in", () => {

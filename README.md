@@ -65,6 +65,10 @@ ReleaseLens uses the GitHub token once to read your profile and never stores it.
 
 Create a read-only GitHub App and connect repositories from the dashboard. See [docs/github-app.md](docs/github-app.md).
 
+### Azure Container Apps (optional)
+
+Set `AZURE_PROVIDER_MODE=simulated` to try deployment targets on recorded Azure responses, with no Azure account. To read real container apps, see [docs/azure.md](docs/azure.md); ReleaseLens needs only the `Reader` role on a resource group.
+
 ## Try the diagnostics engine without Docker
 
 ```sh
@@ -81,8 +85,14 @@ This prints an evidence-backed report that separates facts, inferences, and unkn
 pnpm lint
 pnpm typecheck
 pnpm test               # unit tests, no Docker needed
-pnpm test:integration   # API and database tests against a throwaway PostgreSQL container (needs Docker)
+pnpm test:integration   # database, API and worker tests against throwaway PostgreSQL and Redis containers (needs Docker)
 pnpm build
+```
+
+If containers start too slowly on your machine, reuse the servers from `pnpm db:up` instead. Each suite then gets its own `releaselens_<suite>_test` database and Redis database 14 or 15, wiped before the run; nothing else is touched:
+
+```sh
+RELEASELENS_TEST_POSTGRES_URL=postgresql://releaselens:releaselens@localhost:5432/releaselens RELEASELENS_TEST_REDIS_URL=redis://127.0.0.1:6379 pnpm test:integration
 ```
 
 API documentation (OpenAPI) is served at http://localhost:4000/api/docs while the API runs.
@@ -95,6 +105,7 @@ API documentation (OpenAPI) is served at http://localhost:4000/api/docs while th
 - [Threat model](docs/threat-model.md)
 - [Diagnostic rules](docs/diagnostic-rules.md)
 - [GitHub App setup](docs/github-app.md)
+- [Azure Container Apps](docs/azure.md)
 - [Decision records](docs/decisions/)
 
 ## Contributing

@@ -119,14 +119,17 @@ export function testDeps(
 ): WorkerDeps & {
   enqueueDelivery: ReturnType<typeof vi.fn>;
   enqueueReconcile: ReturnType<typeof vi.fn>;
+  enqueueDeploymentSync: ReturnType<typeof vi.fn>;
 } {
   return {
     db,
     github: { listWorkflowRuns: vi.fn().mockResolvedValue([]) },
+    deploymentTarget: null,
     log: pino({ level: "silent" }),
     now: () => NOW,
     enqueueDelivery: vi.fn().mockResolvedValue(undefined),
     enqueueReconcile: vi.fn().mockResolvedValue(undefined),
+    enqueueDeploymentSync: vi.fn().mockResolvedValue(undefined),
     ...overrides,
   } as never;
 }

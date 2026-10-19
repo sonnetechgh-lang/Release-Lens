@@ -57,13 +57,21 @@ export async function upsertWorkflowRun(
 
 export type IntegrationStatus = "connected" | "suspended" | "disconnected";
 
+/** Providers that sync on a schedule and keep a sync status. */
+export type SyncedProvider = "GITHUB" | "AZURE_CONTAINER_APPS";
+
 /** Records a successful sync: data is fresh and the last error is cleared. */
-export async function recordSyncSuccess(db: Db, projectId: string, at: Date): Promise<void> {
+export async function recordSyncSuccess(
+  db: Db,
+  projectId: string,
+  at: Date,
+  provider: SyncedProvider = "GITHUB",
+): Promise<void> {
   await db.integration.upsert({
-    where: { projectId_provider: { projectId, provider: "GITHUB" } },
+    where: { projectId_provider: { projectId, provider } },
     create: {
       projectId,
-      provider: "GITHUB",
+      provider,
       status: "connected",
       lastAttemptAt: at,
       lastSuccessfulSyncAt: at,
@@ -83,10 +91,11 @@ export async function recordSyncFailure(
   projectId: string,
   at: Date,
   errorKind: string,
+  provider: SyncedProvider = "GITHUB",
 ): Promise<void> {
   await db.integration.upsert({
-    where: { projectId_provider: { projectId, provider: "GITHUB" } },
-    create: { projectId, provider: "GITHUB", lastAttemptAt: at, lastErrorKind: errorKind },
+    where: { projectId_provider: { projectId, provider } },
+    create: { projectId, provider, lastAttemptAt: at, lastErrorKind: errorKind },
     update: { lastAttemptAt: at, lastErrorKind: errorKind },
   });
 }

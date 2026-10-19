@@ -1,9 +1,12 @@
 import { Global, Inject, Injectable, Module, type OnApplicationShutdown } from "@nestjs/common";
 import {
+  createDeploymentSyncQueue,
   createReconcileQueue,
   createWebhookQueue,
+  enqueueDeploymentSync,
   enqueueReconcile,
   enqueueWebhook,
+  type DeploymentSyncJob,
   type GithubReconcileJob,
   type GithubWebhookJob,
 } from "@releaselens/jobs";
@@ -14,6 +17,7 @@ import { APP_CONFIG, type AppConfig } from "../config/config.js";
 export interface Jobs {
   enqueueDelivery(deliveryId: string): Promise<void>;
   enqueueReconcile(projectId: string): Promise<void>;
+  enqueueDeploymentSync(projectId: string): Promise<void>;
 }
 
 export const JOBS = Symbol("JOBS");
@@ -23,6 +27,7 @@ export const JOBS = Symbol("JOBS");
 export class BullJobs implements Jobs, OnApplicationShutdown {
   #webhooks: Queue<GithubWebhookJob> | undefined;
   #reconcile: Queue<GithubReconcileJob> | undefined;
+  #deploymentSync: Queue<DeploymentSyncJob> | undefined;
 
   constructor(@Inject(APP_CONFIG) private readonly config: AppConfig) {}
 
@@ -36,8 +41,17 @@ export class BullJobs implements Jobs, OnApplicationShutdown {
     await enqueueReconcile(this.#reconcile, projectId);
   }
 
+  async enqueueDeploymentSync(projectId: string): Promise<void> {
+    this.#deploymentSync ??= createDeploymentSyncQueue(this.config.redisUrl);
+    await enqueueDeploymentSync(this.#deploymentSync, projectId);
+  }
+
   async onApplicationShutdown(): Promise<void> {
-    await Promise.all([this.#webhooks?.close(), this.#reconcile?.close()]);
+    await Promise.all([
+      this.#webhooks?.close(),
+      this.#reconcile?.close(),
+      this.#deploymentSync?.close(),
+    ]);
   }
 }
 

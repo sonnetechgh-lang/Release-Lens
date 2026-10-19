@@ -52,11 +52,45 @@ export interface IntegrationStatus {
   lastErrorKind: string | null;
 }
 
+/**
+ * How this server reads Azure: `off` (targets are saved but not read), `simulated`
+ * (recorded responses, no Azure account needed), or `azure` (the real Azure API).
+ */
+export type AzureMode = "off" | "simulated" | "azure";
+
+/** An Azure Container App that runs one service in one environment. */
+export interface DeploymentTargetItem {
+  id: string;
+  provider: Provider;
+  service: { slug: string; name: string };
+  environment: { slug: string; name: string };
+  subscriptionId: string;
+  resourceGroup: string;
+  containerApp: string;
+  /** Container whose image identifies the release, when the app runs several. */
+  containerName: string | null;
+  /** Link to the app in the Azure portal. */
+  portalUrl: string;
+  /** When ReleaseLens last read a revision of this app, or null if it never has. */
+  lastObservedAt: string | null;
+}
+
 export interface ProjectDetail extends ProjectSummary {
   role: Role;
   services: { slug: string; name: string }[];
   environments: { slug: string; name: string; releaseBranch: string }[];
   integrations: IntegrationStatus[];
+  deploymentTargets: DeploymentTargetItem[];
+  azureMode: AzureMode;
+}
+
+export interface CreateDeploymentTargetRequest {
+  service: string;
+  environment: string;
+  subscriptionId: string;
+  resourceGroup: string;
+  containerApp: string;
+  containerName?: string;
 }
 
 export interface DeploymentItem {
@@ -71,6 +105,8 @@ export interface DeploymentItem {
   workflowRun: { runId: string; url: string | null } | null;
   activeSince: string;
   providerStatus: string;
+  /** Share of traffic (0–100) the revision received when last observed, if the provider reports it. */
+  trafficWeight: number | null;
   isActive: boolean;
   observedAt: string;
 }

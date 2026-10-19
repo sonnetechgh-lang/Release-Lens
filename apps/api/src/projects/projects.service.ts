@@ -19,7 +19,9 @@ import {
   iso,
   type Db,
 } from "@releaselens/db";
+import { APP_CONFIG, type AppConfig } from "../config/config.js";
 import { DB } from "../db/db.module.js";
+import { DeploymentTargetsService } from "../deployments/deployment-targets.service.js";
 import type { ProjectAccess } from "./access.service.js";
 
 export type FindingStateFilter = "active" | "open" | "acknowledged" | "resolved" | "all";
@@ -44,7 +46,11 @@ const isoOrNull = (date: Date | null) => (date === null ? null : iso(date));
 
 @Injectable()
 export class ProjectsService {
-  constructor(@Inject(DB) private readonly db: Db) {}
+  constructor(
+    @Inject(DB) private readonly db: Db,
+    @Inject(APP_CONFIG) private readonly config: AppConfig,
+    private readonly targets: DeploymentTargetsService,
+  ) {}
 
   private async openCounts(projectIds: string[]): Promise<Map<string, SeverityCounts>> {
     const rows = await this.db.diagnosticFinding.groupBy({
@@ -100,7 +106,11 @@ export class ProjectsService {
         integrations: { orderBy: { provider: "asc" } },
       },
     });
-    const openFindings = (await this.openCounts([p.id])).get(p.id) ?? emptyCounts();
+    const [counts, deploymentTargets] = await Promise.all([
+      this.openCounts([p.id]),
+      this.targets.list(p.id),
+    ]);
+    const openFindings = counts.get(p.id) ?? emptyCounts();
     return {
       org: { slug: p.org.slug, name: p.org.name },
       slug: p.slug,
@@ -126,6 +136,8 @@ export class ProjectsService {
         lastSuccessfulSyncAt: isoOrNull(i.lastSuccessfulSyncAt),
         lastErrorKind: i.lastErrorKind,
       })),
+      deploymentTargets,
+      azureMode: this.config.azureMode,
     };
   }
 
@@ -164,6 +176,7 @@ export class ProjectsService {
         workflowRun: run === undefined ? null : { runId: run.externalId, url: run.url },
         activeSince: iso(d.activeSince),
         providerStatus: d.providerStatus,
+        trafficWeight: d.trafficWeight,
         isActive: d.isActive,
         observedAt: iso(d.observedAt),
       };

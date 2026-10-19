@@ -1,0 +1,68 @@
+{
+  "value": [
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/releaselens-demo/providers/Microsoft.App/containerApps/failed-rollout-api/revisions/failed-rollout-api--r13",
+      "name": "failed-rollout-api--r13",
+      "type": "Microsoft.App/containerApps/revisions",
+      "properties": {
+        "createdTime": "2026-10-18T10:05:00+00:00",
+        "lastActiveTime": "2026-10-18T10:05:00+00:00",
+        "fqdn": "failed-rollout-api--r13.kindwater-1234abcd.westeurope.azurecontainerapps.io",
+        "template": {
+          "containers": [
+            {
+              "name": "failed-rollout-api",
+              "image": "releaselensdemo.azurecr.io/failed-rollout-api@sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+              "resources": {
+                "cpu": 0.5,
+                "memory": "1Gi"
+              }
+            }
+          ],
+          "scale": {
+            "minReplicas": 1,
+            "maxReplicas": 3
+          }
+        },
+        "active": true,
+        "replicas": 1,
+        "trafficWeight": 0,
+        "healthState": "Unhealthy",
+        "provisioningState": "Failed",
+        "runningState": "Failed"
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/releaselens-demo/providers/Microsoft.App/containerApps/failed-rollout-api/revisions/failed-rollout-api--r12",
+      "name": "failed-rollout-api--r12",
+      "type": "Microsoft.App/containerApps/revisions",
+      "properties": {
+        "createdTime": "2026-10-16T14:00:00+00:00",
+        "lastActiveTime": "2026-10-16T14:00:00+00:00",
+        "fqdn": "failed-rollout-api--r12.kindwater-1234abcd.westeurope.azurecontainerapps.io",
+        "template": {
+          "containers": [
+            {
+              "name": "failed-rollout-api",
+              "image": "releaselensdemo.azurecr.io/failed-rollout-api@sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+              "resources": {
+                "cpu": 0.5,
+                "memory": "1Gi"
+              }
+            }
+          ],
+          "scale": {
+            "minReplicas": 1,
+            "maxReplicas": 3
+          }
+        },
+        "active": true,
+        "replicas": 1,
+        "trafficWeight": 100,
+        "healthState": "Healthy",
+        "provisioningState": "Provisioned",
+        "runningState": "Running"
+      }
+    }
+  ]
+}

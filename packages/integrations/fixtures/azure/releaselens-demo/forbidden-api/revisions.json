@@ -1,0 +1,11 @@
+{
+  "$response": {
+    "status": 403,
+    "body": {
+      "error": {
+        "code": "AuthorizationFailed",
+        "message": "The client does not have authorization to perform action 'Microsoft.App/containerApps/revisions/read'."
+      }
+    }
+  }
+}

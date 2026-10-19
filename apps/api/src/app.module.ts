@@ -11,6 +11,8 @@ import { ErrorFilter } from "./common/error.filter.js";
 import type { AppConfig } from "./config/config.js";
 import { ConfigModule } from "./config/config.module.js";
 import { DbModule } from "./db/db.module.js";
+import { DeploymentTargetsController } from "./deployments/deployment-targets.controller.js";
+import { DeploymentTargetsService } from "./deployments/deployment-targets.service.js";
 import { githubAppProvider } from "./github/github-app.provider.js";
 import { GithubController } from "./github/github.controller.js";
 import { GithubService } from "./github/github.service.js";
@@ -40,6 +42,7 @@ export class AppModule {
         AuthController,
         ProjectsController,
         GithubController,
+        DeploymentTargetsController,
         WebhooksController,
       ],
       providers: [
@@ -49,6 +52,7 @@ export class AppModule {
         AccessService,
         ProjectsService,
         GithubService,
+        DeploymentTargetsService,
         githubAppProvider,
         { provide: GITHUB_OAUTH_CLIENT, useClass: HttpGithubOAuthClient },
         // Guards run in this order: rate limit, origin check, session.

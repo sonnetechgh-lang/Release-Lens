@@ -1,6 +1,7 @@
 import { providerBackoff } from "@releaselens/jobs";
 import { describe, expect, it } from "vitest";
 import { loadWorkerConfig } from "./config.js";
+import { createDeploymentTarget } from "./worker.js";
 
 describe("loadWorkerConfig", () => {
   const BASE = { DATABASE_URL: "postgresql://u:p@localhost/db" };
@@ -26,6 +27,43 @@ describe("loadWorkerConfig", () => {
 
   it("requires the app ID and key together", () => {
     expect(() => loadWorkerConfig({ ...BASE, GITHUB_APP_ID: "123" })).toThrow(/both/);
+  });
+
+  it("leaves Azure off unless asked, and validates the Azure settings", () => {
+    expect(loadWorkerConfig(BASE).azure).toEqual({
+      mode: "off",
+      fixturesDir: undefined,
+      syncIntervalMs: 300_000,
+      requestTimeoutMs: 10_000,
+    });
+    expect(
+      loadWorkerConfig({
+        ...BASE,
+        AZURE_PROVIDER_MODE: "simulated",
+        AZURE_SYNC_INTERVAL_MINUTES: "1",
+        AZURE_REQUEST_TIMEOUT_SECONDS: "3",
+      }).azure,
+    ).toMatchObject({ mode: "simulated", syncIntervalMs: 60_000, requestTimeoutMs: 3000 });
+    expect(() => loadWorkerConfig({ ...BASE, AZURE_PROVIDER_MODE: "on" })).toThrow();
+    expect(() => loadWorkerConfig({ ...BASE, AZURE_REQUEST_TIMEOUT_SECONDS: "0" })).toThrow();
+  });
+});
+
+describe("createDeploymentTarget", () => {
+  const azure = loadWorkerConfig({ DATABASE_URL: "x" }).azure;
+
+  it("returns nothing when Azure is off", async () => {
+    expect(await createDeploymentTarget(azure)).toBeNull();
+  });
+
+  it("reads recorded responses in simulated mode", async () => {
+    const target = await createDeploymentTarget({ ...azure, mode: "simulated" });
+    const revisions = await target?.listRevisions({
+      subscriptionId: "00000000-0000-0000-0000-000000000000",
+      resourceGroup: "releaselens-demo",
+      name: "storefront-api",
+    });
+    expect(revisions?.find((r) => r.isServing)?.revisionName).toBe("storefront-api--r102");
   });
 });
 

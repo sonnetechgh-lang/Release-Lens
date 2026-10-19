@@ -69,9 +69,9 @@ Matches priority #1 in the project plan.
 
 Without a subscription, this phase is split into two parts.
 
-**4a — no Azure needed:**
+**4a — no Azure needed:** ✅ done
 
-- `DeploymentTargetProvider` interface. Implement `AzureContainerAppsProvider` with `@azure/arm-appcontainers` + `@azure/identity`, unit-tested against mocked SDK responses that are shaped after the documented API.
+- `DeploymentTargetProvider` interface. Implement `AzureContainerAppsProvider` with direct Azure Resource Manager REST calls + `@azure/identity` (not the management SDK; see decision 0007), unit-tested against responses shaped after the documented API. `AZURE_PROVIDER_MODE=simulated` runs it on those recorded responses.
 - `FakeDeploymentTarget` for demo mode and local development.
 - Sync status per integration: last success, last error, which data is missing.
 - Timeout, throttling (429) and expired-credential handling (scenario 6).

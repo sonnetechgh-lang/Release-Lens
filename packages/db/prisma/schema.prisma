@@ -140,6 +140,7 @@ model Project {
   integrations         Integration[]
   workflowRuns         WorkflowRun[]
   findings             DiagnosticFinding[]
+  deploymentTargets    DeploymentTarget[]
 
   @@unique([orgId, slug])
   @@unique([orgId, githubRepositoryId])
@@ -155,6 +156,7 @@ model Service {
   deployments  Deployment[]
   healthChecks HealthCheckResult[]
   findings     DiagnosticFinding[]
+  targets      DeploymentTarget[]
 
   @@unique([projectId, slug])
 }
@@ -172,8 +174,32 @@ model Environment {
   deployments        Deployment[]
   healthChecks       HealthCheckResult[]
   findings           DiagnosticFinding[]
+  targets            DeploymentTarget[]
 
   @@unique([projectId, slug])
+}
+
+/// Where one service runs in one environment: an Azure Container App, read with
+/// the Reader role only. Sync status is kept on the project's Integration row.
+model DeploymentTarget {
+  id             String      @id @default(cuid())
+  projectId      String
+  project        Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  serviceId      String
+  service        Service     @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  environmentId  String
+  environment    Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  provider       Provider    @default(AZURE_CONTAINER_APPS)
+  subscriptionId String
+  resourceGroup  String
+  resourceName   String
+  /// Container whose image identifies the release. Defaults to the one named like the app, else the first.
+  containerName  String?
+  createdAt      DateTime    @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime    @updatedAt @db.Timestamptz(3)
+
+  @@unique([serviceId, environmentId])
+  @@index([projectId])
 }
 
 /// One connected provider per project. GitHub access comes from the GitHub App installation.
@@ -233,6 +259,8 @@ model Deployment {
   commitShaSource String?
   activeSince     DateTime    @db.Timestamptz(3)
   providerStatus  String
+  /// Share of traffic (0–100) when last observed, if the provider reports it.
+  trafficWeight   Int?
   /// True for the revision currently serving traffic.
   isActive        Boolean     @default(false)
   url             String?

@@ -18,5 +18,7 @@ export {
   setGithubIntegrationStatus,
   upsertWorkflowRun,
   type IntegrationStatus,
+  type SyncedProvider,
   type WorkflowRunUpsert,
 } from "./github.js";
+export { applyRevisions, deactivateDeployments, type RevisionUpsert } from "./deployments.js";

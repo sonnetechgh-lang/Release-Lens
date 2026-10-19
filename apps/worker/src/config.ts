@@ -17,7 +17,20 @@ const EnvSchema = z.object({
     .max(24 * 60)
     .default(10),
   WORKER_CONCURRENCY: z.coerce.number().int().min(1).max(50).default(5),
+  /** off: targets are not read. simulated: recorded responses. azure: the real Azure API. */
+  AZURE_PROVIDER_MODE: z.enum(["off", "simulated", "azure"]).default("off"),
+  /** Directory of recorded responses for simulated mode. Defaults to the shipped fixtures. */
+  AZURE_FIXTURES_DIR: z.string().optional(),
+  AZURE_SYNC_INTERVAL_MINUTES: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(24 * 60)
+    .default(5),
+  AZURE_REQUEST_TIMEOUT_SECONDS: z.coerce.number().int().min(1).max(120).default(10),
 });
+
+export type AzureMode = "off" | "simulated" | "azure";
 
 export interface WorkerConfig {
   env: "development" | "test" | "production";
@@ -27,6 +40,12 @@ export interface WorkerConfig {
   githubApp: { appId: string; privateKey: string } | null;
   reconcileIntervalMs: number;
   concurrency: number;
+  azure: {
+    mode: AzureMode;
+    fixturesDir: string | undefined;
+    syncIntervalMs: number;
+    requestTimeoutMs: number;
+  };
 }
 
 /** Reads the GitHub App private key from a file or the environment. */
@@ -60,5 +79,11 @@ export function loadWorkerConfig(env: NodeJS.ProcessEnv = process.env): WorkerCo
         : null,
     reconcileIntervalMs: e.RECONCILE_INTERVAL_MINUTES * 60 * 1000,
     concurrency: e.WORKER_CONCURRENCY,
+    azure: {
+      mode: e.AZURE_PROVIDER_MODE,
+      fixturesDir: e.AZURE_FIXTURES_DIR,
+      syncIntervalMs: e.AZURE_SYNC_INTERVAL_MINUTES * 60 * 1000,
+      requestTimeoutMs: e.AZURE_REQUEST_TIMEOUT_SECONDS * 1000,
+    },
   };
 }

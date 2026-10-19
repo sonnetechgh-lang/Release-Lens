@@ -10,6 +10,7 @@ Short records of significant design decisions: what was decided, why, and what i
 | [0004](0004-provider-interfaces-and-demo-mode.md) | Provider interfaces with fakes; demo mode on fakes         | Accepted |
 | [0005](0005-sessions-csrf-and-access-control.md)  | Server-side sessions, origin checks, forbidden = not found | Accepted |
 | [0006](0006-webhook-ingestion-and-github-sync.md) | Webhooks: store first, queue second, reconcile always      | Accepted |
+| [0007](0007-azure-container-apps-adapter.md)      | Azure via direct ARM REST calls, simulated by recordings   | Accepted |
 
 ## Template
 

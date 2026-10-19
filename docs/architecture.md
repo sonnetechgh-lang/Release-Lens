@@ -10,7 +10,7 @@ flowchart TD
     API -->|enqueue| QUEUE[(Redis + BullMQ)]
     QUEUE --> WORKER[Worker, Phase 3]
     WORKER -->|read-only| GHAPI[GitHub REST API]
-    WORKER -->|read-only| AZ[Azure Container Apps API, Phase 4]
+    WORKER -->|read-only, Reader role| AZ[Azure Resource Manager: Container Apps, Phase 4]
     WORKER -->|HTTP GET, SSRF-guarded| HEALTH[Service health endpoints, Phase 5]
     WORKER -->|fixed read-only query| MIG[(App DB: _prisma_migrations, Phase 6)]
     WORKER --> DIAG[Diagnostics engine - pure TS, Phase 1]
@@ -45,12 +45,14 @@ flowchart TD
 
 **GitHub sync (Phase 3).** See [decision 0006](decisions/0006-webhook-ingestion-and-github-sync.md) and [GitHub App setup](github-app.md). Webhooks are verified, stored, and queued by the API; `apps/worker` (BullMQ) processes them, reconciles every 10 minutes, re-queues stuck deliveries, and re-runs diagnostics after every change.
 
+**Deployment targets (Phase 4).** See [decision 0007](decisions/0007-azure-container-apps-adapter.md) and [Azure setup](azure.md). An owner maps a service and environment to a container app. Every 5 minutes (and right after connecting) the worker lists the app's revisions, stores them, marks the one serving most traffic as active, records the sync status on the project's Azure integration, and re-runs diagnostics. `AZURE_PROVIDER_MODE=simulated` runs the same adapter on recorded responses.
+
 ## Provider interfaces
 
 Every external system is reached through an interface with at least two implementations: the real adapter and a fake used in demo mode and tests.
 
 - `SourceControlProvider`: GitHub
-- `DeploymentTargetProvider`: Azure Container Apps
+- `DeploymentTargetProvider`: Azure Container Apps (`AzureContainerAppsProvider`; `FakeDeploymentTarget` and recorded responses for tests and simulated mode)
 - `HealthProbe`: HTTP
 - `MigrationInspector`: Prisma
 

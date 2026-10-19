@@ -1,0 +1,14 @@
+{
+  "$response": {
+    "status": 503,
+    "headers": {
+      "retry-after": "10"
+    },
+    "body": {
+      "error": {
+        "code": "ServiceUnavailable",
+        "message": "The service is temporarily unavailable."
+      }
+    }
+  }
+}

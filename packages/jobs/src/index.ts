@@ -4,6 +4,7 @@ import { Queue, type ConnectionOptions } from "bullmq";
 export const QUEUES = {
   githubWebhooks: "github-webhooks",
   githubReconcile: "github-reconcile",
+  deploymentSync: "deployment-sync",
 } as const;
 
 /** The job only carries the delivery ID; the payload stays in PostgreSQL. */
@@ -13,6 +14,11 @@ export interface GithubWebhookJob {
 
 /** Reconcile one project, or every GitHub project when projectId is omitted. */
 export interface GithubReconcileJob {
+  projectId?: string;
+}
+
+/** Read deployment targets (Azure) of one project, or of every project when projectId is omitted. */
+export interface DeploymentSyncJob {
   projectId?: string;
 }
 
@@ -51,6 +57,17 @@ export function createReconcileQueue(redisUrl: string): Queue<GithubReconcileJob
   });
 }
 
+export function createDeploymentSyncQueue(redisUrl: string): Queue<DeploymentSyncJob> {
+  return new Queue<DeploymentSyncJob>(QUEUES.deploymentSync, {
+    connection: redisConnection(redisUrl),
+    defaultJobOptions: {
+      attempts: 3,
+      backoff: { type: PROVIDER_BACKOFF, delay: 5000 },
+      ...retained,
+    },
+  });
+}
+
 /**
  * Enqueues a stored delivery. The job ID is the delivery ID, so enqueueing the
  * same delivery twice (GitHub redelivery, sweeper) creates only one job.
@@ -68,6 +85,17 @@ export async function enqueueReconcile(
 ): Promise<void> {
   // Deduplicate while a reconcile for the same project is already waiting.
   await queue.add("project", { projectId }, { deduplication: { id: `reconcile-${projectId}` } });
+}
+
+export async function enqueueDeploymentSync(
+  queue: Queue<DeploymentSyncJob>,
+  projectId: string,
+): Promise<void> {
+  await queue.add(
+    "project",
+    { projectId },
+    { deduplication: { id: `deployment-sync-${projectId}` } },
+  );
 }
 
 /**

@@ -6,6 +6,7 @@ import type {
 } from "@releaselens/contracts";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { DeploymentTargets } from "@/components/deployment-targets";
 import { FindingCard } from "@/components/finding-card";
 import { Badge, Card, EmptyState, Mono, SectionTitle, SeverityBadge } from "@/components/ui";
 import { apiGet } from "@/lib/api";
@@ -84,6 +85,17 @@ export default async function ProjectPage({ params }: Params) {
           ))}
         </ul>
       )}
+
+      <SectionTitle id="targets">Deployment targets</SectionTitle>
+      <DeploymentTargets
+        org={detail.org.slug}
+        project={detail.slug}
+        canManage={detail.role === "owner"}
+        azureMode={detail.azureMode}
+        targets={detail.deploymentTargets}
+        services={detail.services}
+        environments={detail.environments}
+      />
 
       <SectionTitle id="findings">Findings ({findings.length})</SectionTitle>
       {findings.length === 0 ? (
@@ -172,7 +184,22 @@ export default async function ProjectPage({ params }: Params) {
                     )}
                   </td>
                   <td className={td}>{formatUtc(d.activeSince)}</td>
-                  <td className={td}>{d.providerStatus}</td>
+                  <td className={td}>
+                    <span
+                      className={
+                        d.providerStatus === "failed" || d.providerStatus === "degraded"
+                          ? "font-medium text-red-700 dark:text-red-400"
+                          : ""
+                      }
+                    >
+                      {d.providerStatus}
+                    </span>
+                    {d.trafficWeight !== null && (
+                      <span className="ml-1 text-xs text-slate-500">
+                        ({d.trafficWeight}% traffic)
+                      </span>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>

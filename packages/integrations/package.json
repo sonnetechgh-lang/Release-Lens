@@ -2,7 +2,7 @@
   "name": "@releaselens/integrations",
   "version": "0.0.0",
   "private": true,
-  "description": "Read-only provider clients (GitHub, later Azure) for ReleaseLens.",
+  "description": "Read-only provider clients (GitHub, Azure Container Apps) for ReleaseLens.",
   "license": "MIT",
   "type": "module",
   "exports": {
@@ -12,7 +12,8 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "fixtures"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
@@ -20,6 +21,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@azure/identity": "~4.13.3",
     "@releaselens/contracts": "workspace:*",
     "zod": "^4.6.7"
   },

@@ -1,0 +1,36 @@
+{
+  "value": [
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/releaselens-demo/providers/Microsoft.App/containerApps/tag-only-api/revisions/tag-only-api--v7",
+      "name": "tag-only-api--v7",
+      "type": "Microsoft.App/containerApps/revisions",
+      "properties": {
+        "createdTime": "2026-10-18T07:00:00+00:00",
+        "lastActiveTime": "2026-10-18T07:00:00+00:00",
+        "fqdn": "tag-only-api--v7.kindwater-1234abcd.westeurope.azurecontainerapps.io",
+        "template": {
+          "containers": [
+            {
+              "name": "tag-only-api",
+              "image": "releaselensdemo.azurecr.io/tag-only-api:latest",
+              "resources": {
+                "cpu": 0.5,
+                "memory": "1Gi"
+              }
+            }
+          ],
+          "scale": {
+            "minReplicas": 1,
+            "maxReplicas": 3
+          }
+        },
+        "active": true,
+        "replicas": 1,
+        "trafficWeight": 100,
+        "healthState": "Healthy",
+        "provisioningState": "Provisioned",
+        "runningState": "Running"
+      }
+    }
+  ]
+}

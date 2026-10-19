@@ -60,6 +60,8 @@ const EnvSchema = z
       .optional(),
     GITHUB_APP_PRIVATE_KEY: z.string().optional(),
     GITHUB_APP_PRIVATE_KEY_PATH: z.string().optional(),
+    /** Shown in the dashboard; the worker does the reading. See docs/azure.md. */
+    AZURE_PROVIDER_MODE: z.enum(["off", "simulated", "azure"]).default("off"),
   })
   .refine(
     (env) =>
@@ -86,6 +88,7 @@ export interface AppConfig {
   redisUrl: string;
   githubWebhookSecret: string | null;
   githubApp: { appId: string; privateKey: string; slug: string | null } | null;
+  azureMode: "off" | "simulated" | "azure";
 }
 
 export const APP_CONFIG = Symbol("APP_CONFIG");
@@ -137,5 +140,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
       e.GITHUB_APP_ID !== undefined && privateKey !== undefined
         ? { appId: e.GITHUB_APP_ID, privateKey, slug: e.GITHUB_APP_SLUG ?? null }
         : null,
+    azureMode: e.AZURE_PROVIDER_MODE,
   };
 }
