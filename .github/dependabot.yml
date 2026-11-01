@@ -13,6 +13,13 @@ updates:
       - dependency-name: "@types/node"
         update-types: ["version-update:semver-major"]
     groups:
+      # NestJS packages must share a version, or the API fails to load them.
+      nestjs:
+        patterns:
+          - "@nestjs/common"
+          - "@nestjs/core"
+          - "@nestjs/platform-express"
+          - "@nestjs/testing"
       dev-tooling:
         dependency-type: development
   - package-ecosystem: github-actions
