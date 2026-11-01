@@ -19,7 +19,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "bullmq": "^6.4.0",
+    "bullmq": "^6.5.1",
     "ioredis": "^6.0.0"
   },
   "devDependencies": {
