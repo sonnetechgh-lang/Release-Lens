@@ -36,9 +36,9 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@nestjs/testing": "^12.1.3",
+    "@nestjs/testing": "^12.2.0",
     "@releaselens/config": "workspace:*",
-    "@swc/core": "^1.16.18",
+    "@swc/core": "^1.16.20",
     "@testcontainers/postgresql": "^12.2.1",
     "@types/cookie-parser": "^1.4.10",
     "@types/express": "^5.0.6",
