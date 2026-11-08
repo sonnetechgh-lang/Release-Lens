@@ -19,7 +19,7 @@
     "@releaselens/integrations": "workspace:*",
     "@releaselens/jobs": "workspace:*",
     "@releaselens/redact": "workspace:*",
-    "bullmq": "^6.4.0",
+    "bullmq": "^6.7.0",
     "ioredis": "^6.0.0",
     "pino": "^10.4.0",
     "zod": "^4.6.7"
