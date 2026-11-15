@@ -36,19 +36,19 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@nestjs/testing": "^12.3.2",
+    "@nestjs/testing": "^12.5.0",
     "@releaselens/config": "workspace:*",
-    "@swc/core": "^1.16.20",
+    "@swc/core": "^1.16.22",
     "@testcontainers/postgresql": "^12.2.1",
     "@types/cookie-parser": "^1.4.10",
     "@types/express": "^5.0.6",
     "@types/node": "^24.19.2",
     "@types/supertest": "^7.2.1",
     "pino-pretty": "^13.2.0",
-    "supertest": "^7.3.1",
+    "supertest": "^7.3.2",
     "testcontainers": "^12.2.1",
     "typescript": "~6.0.3",
     "unplugin-swc": "^2.0.0",
-    "vitest": "^5.0.5"
+    "vitest": "^5.1.0"
   }
 }
